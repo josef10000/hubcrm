@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { doc, onSnapshot, updateDoc, setDoc, collection, getDocs, arrayUnion, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, collection, getDocs, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { useArenaStore } from '@store/useArenaStore';
 import { useNexusStore } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
@@ -123,9 +122,6 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
     selectedBookRefId: undefined
   });
 
-  // Zustand Actions
-  const addArenaCredits = useArenaStore(state => state.addArenaCredits);
-
   // Efeito para carregar livros da comunidade em tempo real do Firestore
   useEffect(() => {
     if (!orgId) return;
@@ -151,7 +147,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
   }, [userProfile]);
 
   // Sons procedurais Retro Chiptune
-  const playRetroSound = (type: 'success' | 'click' | 'powerup') => {
+  const playRetroSound = (type: 'success' | 'click') => {
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
@@ -182,15 +178,6 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
         osc.start(now);
         osc.stop(now + 0.4);
-      } else if (type === 'powerup') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(800, now + 0.25);
-        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.5);
-        gainNode.gain.setValueAtTime(0.06, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
-        osc.start(now);
-        osc.stop(now + 0.55);
       }
     } catch (e) {
       console.warn('Web Audio Context bloqueado ou não suportado.');
@@ -369,42 +356,6 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
 
   const getActiveClub = () => {
     return clubs.find(c => c.department === selectedDept);
-  };
-
-  // Ação de Reivindicar Prêmio de Coins (+200 coins)
-  const handleClaimReward = async (club: ReadingClub) => {
-    playRetroSound('powerup');
-    
-    const userClaimedClubs = userProfile?.claimedReadingClubs || [];
-    if (userClaimedClubs.includes(club.bookId)) {
-      toast.info('Você já reivindicou o prêmio deste clube de leitura!');
-      return;
-    }
-
-    try {
-      // 1. Adicionar os créditos no Firestore
-      await addArenaCredits(userUid, 200);
-
-      // 2. Registrar a reivindicação no perfil do usuário
-      const profileRef = doc(db, 'profiles', userUid);
-      await updateDoc(profileRef, {
-        claimedReadingClubs: arrayUnion(club.bookId)
-      });
-
-      // 3. Estouro de confetti neon com arpejo
-      confetti({
-        particleCount: 150,
-        spread: 90,
-        origin: { y: 0.6 },
-        colors: ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
-      });
-
-      setTimeout(() => playRetroSound('success'), 200);
-      toast.success('🏆 Parabéns! +200 Hub Coins adicionadas ao seu saldo!');
-    } catch (e) {
-      toast.error('Erro ao resgatar moedas. Tente novamente.');
-      console.error(e);
-    }
   };
 
   // Ação para o usuário atualizar sua leitura
@@ -620,23 +571,14 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-3 max-w-2xl text-center md:text-left">
               <span className="px-3 py-1 bg-primary-500/15 border border-primary-500/30 text-primary-400 rounded-full text-[9px] font-black uppercase tracking-widest">
-                Nexus Hub & Arena Synergy
+                Biblioteca Nexus
               </span>
               <h2 className="text-3xl font-black text-white uppercase tracking-tight">
                 Clubes de Leitura Nexus Coletivos
               </h2>
               <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                Una-se ao seu departamento e devore livros técnicos! Cada time tem uma meta acumulada de leitura no livro do mês. Ao bater 100%, todos ganham <span className="text-amber-400">200 Hub Coins 🪙</span> para gastar na Arena!
+                Acompanhe metas compartilhadas de leitura e o progresso registrado por participante.
               </p>
-            </div>
-            <div className="px-6 py-4 bg-white/5 border border-white/10 rounded-3xl flex items-center gap-4 w-full sm:w-auto">
-              <div className="w-12 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-2xl font-bold shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                🪙
-              </div>
-              <div>
-                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Seu Saldo</p>
-                <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Hub Coins</span></h3>
-              </div>
             </div>
           </div>
         </div>
@@ -836,7 +778,6 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
   }
 
   const activeClub = getActiveClub();
-  const userHasClaimed = activeClub ? (userProfile?.claimedReadingClubs || []).includes(activeClub.bookId) : false;
 
   return (
     <div className="space-y-12">
@@ -846,13 +787,13 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl text-center md:text-left">
             <span className="px-3 py-1 bg-primary-500/15 border border-primary-500/30 text-primary-400 rounded-full text-[9px] font-black uppercase tracking-widest">
-              Nexus Hub & Arena Synergy
+              Biblioteca Nexus
             </span>
             <h2 className="text-3xl font-black text-white uppercase tracking-tight">
               Clubes de Leitura Nexus Coletivos
             </h2>
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-              Una-se ao seu departamento e devore livros técnicos! Cada time tem uma meta acumulada de leitura no livro do mês. Ao bater 100%, todos ganham <span className="text-amber-400">200 Hub Coins 🪙</span> para gastar na Arena!
+              Acompanhe metas compartilhadas de leitura e o progresso registrado por participante.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
@@ -863,15 +804,6 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
               <i className="ph-bold ph-plus" />
               Criar Clube
             </button>
-            <div className="px-6 py-4 bg-white/5 border border-white/10 rounded-3xl flex items-center gap-4 w-full sm:w-auto">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-2xl font-bold shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                🪙
-              </div>
-              <div>
-                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Seu Saldo</p>
-                <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Hub Coins</span></h3>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -1098,7 +1030,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                   </div>
                 </div>
 
-                {/* PAINEL DE PREMIAÇÃO (EXIBIDO APENAS SE FOR 100% E FOR O TIME DO COLABORADOR LOGADO) */}
+                {/* Destaque informativo quando a meta compartilhada é concluída. */}
                 <AnimatePresence>
                   {stats.progress === 100 && (
                     <motion.div
@@ -1115,38 +1047,12 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                       </div>
                       <div className="space-y-2 max-w-xl">
                         <h4 className="text-xl font-black text-amber-400 uppercase tracking-tight">
-                          {isUserClub ? 'Seu Time Bateu a Meta Coletiva! 🎉' : `O Time ${activeClub.department} Bateu a Meta Coletiva! 🏆`}
+                          {isUserClub ? 'Meta de leitura concluída!' : `Meta do time ${activeClub.department} concluída!`}
                         </h4>
                         <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                          {isUserClub
-                            ? 'Parabéns a todos os leitores do time por manterem o foco técnico! Reivindique sua bonificação especial de Hub Coins na carteira agora mesmo.'
-                            : 'O time de leitores do departamento atingiu 100% de leitura acumulada no livro oficial do mês!'}
+                          O grupo atingiu a meta de leitura definida para o livro selecionado.
                         </p>
                       </div>
-
-                      {isUserClub && (
-                        <button
-                          onClick={() => handleClaimReward(activeClub)}
-                          disabled={userHasClaimed}
-                          className={`px-8 py-4.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 shadow-2xl relative ${
-                            userHasClaimed
-                              ? 'bg-amber-500/10 border border-amber-500/20 text-amber-500/60 cursor-default'
-                              : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-[#0d0f16] shadow-amber-500/20 hover:scale-105 active:scale-95 animate-pulse'
-                          }`}
-                        >
-                          {userHasClaimed ? (
-                            <span className="flex items-center gap-2">
-                              <i className="ph-bold ph-check-circle text-base" />
-                              Prêmio Reivindicado 🌟
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-2">
-                              <i className="ph-fill ph-gift text-base" />
-                              Reivindicar Hub Coins (+200 🪙)
-                            </span>
-                          )}
-                        </button>
-                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -1184,16 +1090,6 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                                     {member.displayName.charAt(0)}
                                   </div>
                                 )}
-                                
-                                {/* Frame Cosmético Neon */}
-                                {member.avatarFrame && member.avatarFrame !== 'none' && (
-                                  <div className={`absolute -inset-0.5 rounded-xl border border-dashed animate-pulse pointer-events-none ${
-                                    member.avatarFrame === 'gold' ? 'border-amber-400' :
-                                    member.avatarFrame === 'ruby' ? 'border-red-500' :
-                                    member.avatarFrame === 'cyberpunk' ? 'border-cyan-400' :
-                                    member.avatarFrame === 'rainbow' ? 'border-purple-400' : 'border-primary-400'
-                                  }`} />
-                                )}
                               </div>
 
                               <div className="min-w-0">
@@ -1201,11 +1097,6 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                                   {member.displayName.split(' ')[0]}
                                   {isSelf && <span className="text-[7px] bg-primary-500 px-1 py-0.5 rounded text-white font-black">Você</span>}
                                 </h4>
-                                {member.activeTitle && (
-                                  <p className="text-[8px] font-black text-primary-400 uppercase tracking-widest mt-0.5 truncate bg-primary-500/10 px-1 py-0.5 rounded w-fit">
-                                    👑 {member.activeTitle}
-                                  </p>
-                                )}
                               </div>
                             </div>
 
@@ -1261,7 +1152,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                     Registrar Progresso
                   </h3>
                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed mt-1">
-                    Digite a sua página lida atual do livro oficial do mês para acumular pontos para a meta coletiva do seu time.
+                    Registre a página atual do livro oficial para acompanhar o progresso do grupo.
                   </p>
                 </div>
 

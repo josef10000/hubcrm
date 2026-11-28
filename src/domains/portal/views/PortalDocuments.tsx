@@ -14,9 +14,7 @@ import {
   FileUp,
   AlertCircle
 } from 'lucide-react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Client, ClientContract, ClientLog } from '@/types';
+import { Client, ClientContract } from '@/types';
 import { toast } from 'sonner';
 
 interface PortalDocumentsProps {
@@ -28,8 +26,11 @@ export default function PortalDocuments({ client, orgId }: PortalDocumentsProps)
   const [selectedContract, setSelectedContract] = useState<ClientContract | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [signing, setSigning] = useState(false);
+  const [signedContractIds, setSignedContractIds] = useState<string[]>([]);
 
-  const contracts = client.contracts || [];
+  const contracts = (client.contracts || []).map(contract =>
+    signedContractIds.includes(contract.id) ? { ...contract, status: 'signed' as const } : contract
+  );
 
   const handleSign = async () => {
     if (!agreed || !selectedContract) {
@@ -38,43 +39,30 @@ export default function PortalDocuments({ client, orgId }: PortalDocumentsProps)
     }
     setSigning(true);
     try {
-      const ipRes = await fetch('https://api.ipify.org?format=json');
-      const ipData = await ipRes.json();
-      const ipAddress = ipData.ip || '0.0.0.0';
-      const userAgent = navigator.userAgent;
-      const timestamp = Date.now();
+      const token = new URLSearchParams(window.location.search).get('token') || sessionStorage.getItem('portalToken');
+      if (!token) throw new Error('O link seguro do portal expirou. Abra novamente o link enviado pela equipe.');
 
-      const updatedContracts = (client.contracts || []).map(c => {
-        if (c.id === selectedContract.id) {
-          return {
-            ...c,
-            status: 'signed',
-            signedAt: timestamp,
-            signedIp: ipAddress,
-            signedUserAgent: userAgent
-          } as ClientContract;
-        }
-        return c;
+      const response = await fetch('/api/portal_handler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'portal_sign_contract',
+          orgId,
+          clientId: client.id,
+          token,
+          contractId: selectedContract.id
+        })
       });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Não foi possível assinar o contrato.');
 
-      const newLog: ClientLog = {
-        id: Date.now().toString(36),
-        text: `Contrato assinado digitalmente via Portal do Cliente sob o IP ${ipAddress}.`,
-        date: timestamp
-      };
-
-      const clientRef = doc(db, 'organizations', orgId, 'clients', client.id);
-      await updateDoc(clientRef, {
-        contracts: updatedContracts,
-        logs: [...(client.logs || []), newLog]
-      });
-
-      toast.success('Contrato Assinado com Sucesso!', { description: 'Sua assinatura com validade de IP foi registrada.' });
+      setSignedContractIds(current => current.includes(selectedContract.id) ? current : [...current, selectedContract.id]);
+      toast.success('Contrato assinado com sucesso!', { description: 'O registro da assinatura foi confirmado pelo portal.' });
       setSelectedContract(null);
       setAgreed(false);
     } catch (e) {
       console.error(e);
-      toast.error('Ocorreu um erro ao assinar. Tente novamente ou contate o provedor.');
+      toast.error(e instanceof Error ? e.message : 'Ocorreu um erro ao assinar. Tente novamente.');
     } finally {
       setSigning(false);
     }

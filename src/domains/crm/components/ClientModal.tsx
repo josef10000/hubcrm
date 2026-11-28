@@ -781,9 +781,13 @@ function ClientModal({
                           <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link de Briefing do Cliente</label>
                           <div className="flex items-center gap-2">
                             <div className="flex-1 px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 rounded-xl text-sm truncate select-all">
-                              {window.location.origin}/onboarding/{effectiveOrgId}/{initialData.id}
+                              {window.location.origin}/onboarding/{effectiveOrgId}/{initialData.id}?token={initialData.publicToken || ''}
                             </div>
-                            <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/onboarding/${effectiveOrgId}/${initialData.id}`); toast.success('Link copiado!'); }}
+                            <button type="button" onClick={() => {
+                              if (!initialData.publicToken) { toast.error('Salve novamente o cliente para gerar um link seguro.'); return; }
+                              navigator.clipboard.writeText(`${window.location.origin}/onboarding/${effectiveOrgId}/${initialData.id}?token=${encodeURIComponent(initialData.publicToken)}`);
+                              toast.success('Link copiado!');
+                            }}
                               className="p-3 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl transition-colors shrink-0" title="Copiar Link">
                               <Copy size={18} />
                             </button>

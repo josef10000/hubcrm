@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware';
 import { doc, onSnapshot, updateDoc, getDoc, getDocs, setDoc, collection, addDoc, deleteDoc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Logger } from '@/lib/logger';
-import { useArenaStore } from './useArenaStore';
 import { toast } from 'sonner';
 
 export interface PersonalLink {
@@ -87,7 +86,6 @@ export interface LearningPath {
   benefit: string;
   neonColor: string;
   bookIds: string[];
-  hubCoinReward: number;
   createdAt: number;
   createdBy: string;
 }
@@ -100,7 +98,6 @@ export interface UserPathProgress {
   completedAt: number | null;
   completedBookIds: string[];
   progressPercentage: number;
-  welcomeRewardClaimed?: boolean;
 }
 
 export interface NexusBook {
@@ -125,8 +122,6 @@ export interface NexusBook {
   format?: 'pdf' | 'kindle' | 'physical';
   learningPathId?: string;
   neonColor?: string;
-  maxPageRead?: number;
-  lastProgressUpdateAt?: number;
 }
 
 export interface NexusData {
@@ -520,35 +515,18 @@ export const useNexusStore = create<NexusState>()(
     const book = books.find(b => b.id === bookId);
     if (book) {
       const oldPage = book.currentPage || 0;
-      
-      // Se não houve alteração real, não faz nada
-      if (page === oldPage) return;
-
-      // 1. Trava temporal de 24 horas: se o progresso for alterado, não pode ser em menos de 24 horas
-      const lastUpdate = book.lastProgressUpdateAt || 0;
-      const diffMs = Date.now() - lastUpdate;
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      
-      if (lastUpdate > 0 && diffMs < oneDayMs) {
-        const hoursLeft = Math.ceil((oneDayMs - diffMs) / (1000 * 60 * 60));
-        toast.error(`Atenção: Por diretrizes de gamificação e ritmo de estudo cognitivo, você só pode registrar progresso de leitura a cada 24 horas para cada obra. Tente novamente em ${hoursLeft}h! ⏳`);
-        return;
-      }
-
-      // 2. Cálculo seguro de moedas baseado no recorde maxPageRead
-      const maxPage = book.maxPageRead || 0;
-      const pagesToReward = Math.max(0, page - maxPage);
+      const nextPage = Math.max(0, Math.min(Math.floor(page), book.totalPages || Number.MAX_SAFE_INTEGER));
+      if (nextPage === oldPage) return;
+      const pagesRead = Math.max(0, nextPage - oldPage);
       
       const updates: Partial<NexusBook> = { 
-        currentPage: page,
-        lastProgressUpdateAt: Date.now(),
-        maxPageRead: Math.max(maxPage, page)
+        currentPage: nextPage
       };
       
       // Se terminou (chegou no total), muda para "finalizado"
-      if (book.totalPages && page >= book.totalPages) {
+      if (book.totalPages && nextPage >= book.totalPages) {
         updates.status = 'finished';
-      } else if (page > 0) {
+      } else if (nextPage > 0) {
         updates.status = 'reading';
       } else {
         updates.status = undefined;
@@ -556,26 +534,14 @@ export const useNexusStore = create<NexusState>()(
 
       await updateBookDetails(bookId, updates);
 
-      // Registra a atividade se houve progresso positivo e concede HubCoins
-      if (pagesToReward > 0) {
+      // Registra apenas avanço real; o progresso pode ser corrigido a qualquer momento.
+      if (pagesRead > 0) {
         await get().addActivityLog({
           type: 'reading',
           bookId,
-          pagesRead: pagesToReward,
+          pagesRead,
           timestamp: Date.now()
         });
-
-        const uid = get().uid;
-        if (uid) {
-          try {
-            await useArenaStore.getState().addArenaCredits(uid, pagesToReward);
-            toast.success(`Você ganhou +${pagesToReward} HubCoins por ler ${pagesToReward} páginas novas! 🪙`);
-          } catch (err) {
-            Logger.error('[NexusStore] Falha ao conceder HubCoins por leitura:', err);
-          }
-        }
-      } else if (page > oldPage) {
-        toast.info(`Progresso de leitura salvo! Você já havia recebido HubCoins pelas páginas lidas até a página ${maxPage}. 📖`);
       }
 
       // Sincronização com o Clube de Leitura correspondente (Biblioteca ➡️ Clube)
@@ -672,11 +638,7 @@ export const useNexusStore = create<NexusState>()(
                     
                     // Se concluiu a trilha agora
                     if (isCompleted && progressData.status !== 'COMPLETED') {
-                      const reward = pathData.hubCoinReward || 200;
-                      await useArenaStore.getState().addArenaCredits(uid, reward);
-                      toast.success(`🎉 TRILHA CONCLUÍDA! Você finalizou a trilha "${pathData.name}" e faturou +${reward} HubCoins! 🪙`, {
-                        duration: 8000
-                      });
+                      toast.success(`Trilha concluída: ${pathData.name}.`);
                     } else {
                       toast.success(`Livro concluído! Progresso na trilha "${pathData.name}": ${progressPercentage}% 📚`);
                     }

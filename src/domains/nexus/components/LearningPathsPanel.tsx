@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Trophy, Sparkles, Plus, CheckCircle, ArrowRight, Flame, ShieldAlert, Award, Trash2, Pencil, X } from 'lucide-react';
-import { doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, query, orderBy, getDocs, getDoc } from 'firebase/firestore';
+import { BookOpen, Sparkles, Plus, CheckCircle, ArrowRight, Flame, ShieldAlert, Award, Trash2, Pencil, X } from 'lucide-react';
+import { doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNexusStore, NexusBook } from '@store/useNexusStore';
-import { useArenaStore } from '@store/useArenaStore';
 import { NEON_AURA_MAP } from './library/BookCard';
 
 import { usePermissions } from '@auth/hooks/usePermissions';
@@ -18,7 +17,6 @@ export interface LearningPath {
   benefit: string;
   neonColor: string; // ex: 'acid-lime' | 'cyberpunk-pink'
   bookIds: string[]; // IDs dos livros da comunidade associados
-  hubCoinReward: number;
   createdAt: number;
   createdBy: string;
 }
@@ -31,7 +29,6 @@ export interface UserPathProgress {
   completedAt: number | null;
   completedBookIds: string[];
   progressPercentage: number;
-  welcomeRewardClaimed?: boolean;
 }
 
 export function LearningPathsPanel() {
@@ -50,7 +47,6 @@ export function LearningPathsPanel() {
   const [benefit, setBenefit] = useState('');
   const [neonColor, setNeonColor] = useState('acid-lime');
   const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
-  const [hubCoinReward, setHubCoinReward] = useState(200);
 
   // Estados para Modais de Confirmação Personalizados
   const [pathToAbandon, setPathToAbandon] = useState<LearningPath | null>(null);
@@ -69,10 +65,7 @@ export function LearningPathsPanel() {
     const tId = toast.loading(`Cancelando missão "${path.name}"...`);
     try {
       const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', path.id);
-      const progressSnap = await getDoc(progressRef);
-      const welcomeRewardClaimed = progressSnap.exists() ? !!progressSnap.data()?.welcomeRewardClaimed : false;
-
-      // 1. Reseta o progresso para NOT_STARTED preservando a flag welcomeRewardClaimed
+      // Reseta o progresso da trilha sem alterar os dados históricos da biblioteca.
       await setDoc(progressRef, {
         pathId: path.id,
         userId: uid,
@@ -80,11 +73,10 @@ export function LearningPathsPanel() {
         startedAt: 0,
         completedAt: null,
         completedBookIds: [],
-        progressPercentage: 0,
-        welcomeRewardClaimed
+        progressPercentage: 0
       });
 
-      // 2. Limpa os vínculos, auras e progresso de leitura dos livros vinculados na estante
+      // Limpa os vínculos visuais da trilha sem zerar o progresso real de leitura.
       const currentBooks = [...useNexusStore.getState().books];
       const updatedBooks = currentBooks.map(b => {
         if (b.learningPathId === path.id) {
@@ -92,8 +84,6 @@ export function LearningPathsPanel() {
             ...b,
             learningPathId: undefined,
             neonColor: undefined,
-            currentPage: 0,
-            maxPageRead: 0, // Permite ler e pontuar do zero ao reiniciar
             status: 'want_to_read' as const
           };
         }
@@ -106,7 +96,7 @@ export function LearningPathsPanel() {
       });
       useNexusStore.getState().setBooks(updatedBooks);
 
-      toast.success(`Você desistiu da missão. Suas HubCoins foram salvas e seus livros foram limpos na estante! 🛑`, { id: tId, duration: 6000 });
+      toast.success('Trilha removida da sua biblioteca.', { id: tId, duration: 6000 });
     } catch (err) {
       console.error('Erro ao desistir da trilha:', err);
       toast.error('Falha ao desistir da trilha corporativa.', { id: tId });
@@ -135,7 +125,6 @@ export function LearningPathsPanel() {
     setBenefit('');
     setSelectedBookIds([]);
     setNeonColor('acid-lime');
-    setHubCoinReward(200);
     setIsCreating(false);
     setEditingPath(null);
   };
@@ -148,7 +137,6 @@ export function LearningPathsPanel() {
     setBenefit(path.benefit);
     setSelectedBookIds(path.bookIds);
     setNeonColor(path.neonColor);
-    setHubCoinReward(path.hubCoinReward);
     setIsCreating(true);
   };
 
@@ -189,31 +177,14 @@ export function LearningPathsPanel() {
     };
   }, [orgId, uid]);
 
-  // Função para aceitar e iniciar uma trilha com bônus de aceite antifraude
+  // Adiciona os livros da trilha à biblioteca e acompanha o progresso.
   const handleStartPath = async (path: LearningPath) => {
     if (!uid || !orgId) return;
 
     const tId = toast.loading(`Iniciando missão "${path.name}"...`);
     try {
-      // 1. Verifica se o progresso já existia e se o bônus de aceite já foi coletado
+      // Reinicia somente o progresso da trilha, não o histórico real de leitura.
       const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', path.id);
-      const progressSnap = await getDoc(progressRef);
-      const hasClaimedBefore = progressSnap.exists() ? !!progressSnap.data()?.welcomeRewardClaimed : false;
-
-      let welcomeRewardClaimed = hasClaimedBefore;
-
-      // Se for o primeiro aceite, concede o bônus de aceite (+50 HubCoins)
-      if (!hasClaimedBefore) {
-        try {
-          await useArenaStore.getState().addArenaCredits(uid, 50);
-          welcomeRewardClaimed = true;
-          toast.success(`🎉 BÔNUS DE ACEITE: Você ganhou +50 HubCoins de boas-vindas à missão! 🪙`, { duration: 6000 });
-        } catch (coinErr) {
-          console.error('Erro ao conceder bônus de aceite:', coinErr);
-        }
-      }
-
-      // 2. Cria ou reescreve o registro de progresso com status ACTIVE
       const initialProgress: UserPathProgress = {
         pathId: path.id,
         userId: uid,
@@ -221,8 +192,7 @@ export function LearningPathsPanel() {
         startedAt: Date.now(),
         completedAt: null,
         completedBookIds: [],
-        progressPercentage: 0,
-        welcomeRewardClaimed
+        progressPercentage: 0
       };
       await setDoc(progressRef, initialProgress);
 
@@ -244,13 +214,11 @@ export function LearningPathsPanel() {
         const existingIdx = updatedBooks.findIndex(b => b.originalBookId === comBook.id || b.title.toLowerCase().trim() === comBook.title.toLowerCase().trim());
         
         if (existingIdx !== -1) {
-          // Atualiza para incluir os campos da trilha, aura neon e zera progresso/maxPageRead se ele estiver reiniciando do zero
+          // Atualiza somente o vínculo visual da trilha; preserva o progresso já registrado.
           updatedBooks[existingIdx] = {
             ...updatedBooks[existingIdx],
             learningPathId: path.id,
-            neonColor: path.neonColor,
-            currentPage: 0,
-            maxPageRead: 0 // Permite ganhar moedas novamente ao ler do zero de forma justa
+            neonColor: path.neonColor
           };
           hasUpdates = true;
         } else {
@@ -261,7 +229,6 @@ export function LearningPathsPanel() {
             originalBookId: comBook.id,
             addedAt: Date.now(),
             currentPage: 0,
-            maxPageRead: 0,
             status: 'want_to_read',
             learningPathId: path.id,
             neonColor: path.neonColor,
@@ -383,7 +350,6 @@ export function LearningPathsPanel() {
         benefit,
         neonColor,
         bookIds: selectedBookIds,
-        hubCoinReward,
         createdAt: isEdit ? editingPath.createdAt : Date.now(),
         createdBy: isEdit ? editingPath.createdBy : uid
       };
@@ -472,7 +438,7 @@ export function LearningPathsPanel() {
                 {editingPath ? 'Editar Trilha Estratégica' : 'Criar Trilha Estratégica'}
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
                   <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Nome da Trilha</label>
                   <input
@@ -484,16 +450,6 @@ export function LearningPathsPanel() {
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Prêmio de HubCoins</label>
-                  <input
-                    type="number"
-                    placeholder="Ex: 200"
-                    value={hubCoinReward}
-                    onChange={e => setHubCoinReward(Math.max(1, parseInt(e.target.value) || 0))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-primary-500 outline-none transition-all"
-                  />
-                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -648,19 +604,13 @@ export function LearningPathsPanel() {
                           <span className={`text-[8px] font-black uppercase tracking-[0.25em] ${
                             isCompleted ? 'text-yellow-400' : isPaused ? 'text-gray-500' : isStarted ? 'text-cyan-400' : 'text-slate-500'
                           }`}>
-                            {isCompleted ? '🏆 Trilha Concluída' : isPaused ? '⏸️ Missão Pausada' : isStarted ? '⚡ Missão Ativa' : '📖 Trilha Disponível'}
+                            {isCompleted ? '✓ Trilha Concluída' : isPaused ? '⏸️ Trilha Pausada' : isStarted ? 'Ativa' : '📖 Trilha Disponível'}
                           </span>
                           <h3 className="text-base font-black text-white uppercase tracking-wider truncate leading-tight group-hover:text-primary-400 transition-colors">
                             {path.name}
                           </h3>
                         </div>
 
-                        {/* Distintivo / Moedas */}
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/5 border border-yellow-500/20 rounded-xl shrink-0">
-                          <Trophy size={12} className="text-yellow-400 animate-bounce" />
-                          <span className="text-[10px] font-black text-yellow-400 tracking-wider">+{path.hubCoinReward}</span>
-                          <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Coins</span>
-                        </div>
                       </div>
 
                       {/* Descrições */}
@@ -856,7 +806,6 @@ export function LearningPathsPanel() {
                 <div className="space-y-2.5 p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-[10px] text-gray-500 font-medium">
                   <div className="flex gap-2">
                     <span className="text-emerald-400">✓</span>
-                    <span>Suas <strong>HubCoins</strong> acumuladas na carteira <strong>não serão alteradas</strong>. 🪙</span>
                   </div>
                   <div className="flex gap-2">
                     <span className="text-rose-400">✗</span>

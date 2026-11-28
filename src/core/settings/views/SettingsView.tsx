@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { Settings, LogOut, Image as ImageIcon, Volume2, Crown, Users, UserRound } from 'lucide-react';
+import React from 'react';
+import { Settings, LogOut, Users, UserRound } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useUI } from '@/contexts/UIContext';
-import { useAuth } from '@auth/contexts/AuthContext';
 import { auth, db } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -19,22 +18,8 @@ export default function SettingsView() {
     effectiveOrgId,
   } = useCRM();
 
-  const { userProfile, user } = useAuth();
   const { mode } = useOperatingMode();
   const { hasPermission } = usePermissions();
-  
-  const [wallpaperUrl, setWallpaperUrl] = useState(userProfile?.wallpaperUrl || '');
-  const [soundTheme, setSoundTheme] = useState(userProfile?.soundTheme || 'none');
-  const [avatarFrame, setAvatarFrame] = useState(userProfile?.avatarFrame || 'none');
-  
-  const savePersonalSettings = async () => {
-    if (!user) return;
-    await setDoc(doc(db, 'profiles', user.uid), {
-      wallpaperUrl,
-      soundTheme,
-      avatarFrame
-    }, { merge: true });
-  };
 
   const colorThemes = [
     { id: 'orange', name: 'Laranja', color: 'bg-[#f97316]' },
@@ -87,61 +72,6 @@ export default function SettingsView() {
             })}
           </div>
         </div>}
-
-        {/* --- Personalização do Perfil (Privado do Usuário) --- */}
-        <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8 relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-            <ImageIcon className="mr-2 text-cyan-400" size={20} />
-            Meu Hub (Personalização)
-          </h3>
-
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                  <Crown size={16}/> Moldura do Avatar
-                </label>
-                <select
-                  value={avatarFrame}
-                  onChange={e => setAvatarFrame(e.target.value as any)}
-                  className="w-full bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 outline-none text-sm"
-                >
-                  <option value="none">Nenhuma</option>
-                  {Array.from(new Set(['none', ...(userProfile?.unlockedFrames || []), userProfile?.avatarFrame].filter(Boolean))).map(frameKey => {
-                    const frameNames: Record<string, string> = {
-                      none: 'Nenhuma',
-                      neon: 'Neon Purple (Loja)',
-                      gold: 'Gold Premium (Loja)',
-                      cyberpunk: 'Cyberpunk Cyan (Loja)',
-                      floral: 'Eco Floral (Loja)',
-                      ruby: 'Ruby Red (Loja)',
-                      ocean: 'Ocean Blue (Loja)',
-                      dark: 'Dark Minimalist (Loja)',
-                      rainbow: 'Rainbow Glow (Loja)',
-                      silver: 'Silver Platinum (Loja)'
-                    };
-                    if (frameKey === 'none') return null;
-                    return (
-                      <option key={frameKey} value={frameKey}>
-                        {frameNames[frameKey] || frameKey}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-white/10">
-              <SaveButton
-                onClick={savePersonalSettings}
-                className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl font-bold transition-all"
-              >
-                Salvar Meu Perfil
-              </SaveButton>
-            </div>
-          </div>
-        </div>
 
         <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">

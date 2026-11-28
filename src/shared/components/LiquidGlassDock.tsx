@@ -19,7 +19,7 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 import { useGlobalChatAlerts } from '@/hooks/useGlobalChatAlerts';
 import { useRadioStore } from '@/store/useRadioStore';
 import { getThemePalette } from '@shared/utils/themePalette';
-import AvatarFrame, { getCleanPhotoURL } from './AvatarFrame';
+import { getCleanPhotoURL } from '@shared/utils/avatar';
 import { PremiumIcon } from './Sidebar';
 import { navGroups } from '@/constants/navigation';
 import { auth } from '@/lib/firebase';
@@ -707,7 +707,7 @@ export default function LiquidGlassDock() {
             }}
             className="relative cursor-pointer shrink-0 pl-0.5"
           >
-            <AvatarFrame size="sm" pulseStatus="none" frame={userProfile?.avatarFrame || 'none'}>
+            <>
               <div className="w-10 h-10 rounded-2xl bg-primary-500 flex items-center justify-center text-white font-black text-xs overflow-hidden border border-white/25 shadow-md">
                 {isValidPhotoURL(userProfile?.photoURL) ? (
                   <img
@@ -719,7 +719,7 @@ export default function LiquidGlassDock() {
                   (userProfile?.displayName || user?.displayName || 'J')[0].toUpperCase()
                 )}
               </div>
-            </AvatarFrame>
+            </>
           </motion.div>
         </div>
       </div>

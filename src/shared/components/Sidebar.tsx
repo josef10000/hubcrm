@@ -9,7 +9,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useGlobalChatAlerts } from '@/hooks/useGlobalChatAlerts';
 import NavItem from './NavItem';
-import AvatarFrame, { getCleanPhotoURL } from './AvatarFrame';
+import { getCleanPhotoURL } from '@shared/utils/avatar';
 import ProfileHoverCard from './ProfileHoverCard';
 import { navGroups } from '@/constants/navigation';
 import { usePresence } from '@/hooks/usePresence';
@@ -292,7 +292,7 @@ export default function Sidebar() {
                   onClick={() => setStatusMenuOpen(!statusMenuOpen)}
                   className="relative cursor-pointer group"
                 >
-                  <AvatarFrame size="md" pulseStatus="none" frame={userProfile?.avatarFrame || 'none'}>
+                  <>
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden group-hover:scale-105 transition-transform">
                       {isValidPhotoURL(userProfile?.photoURL) ? (
                         <img src={getCleanPhotoURL(userProfile!.photoURL)} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
@@ -300,7 +300,7 @@ export default function Sidebar() {
                         (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
                       )}
                     </div>
-                  </AvatarFrame>
+                  </>
                   {!isSolo && <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
                     getStatusColor(userProfile?.presenceStatus || 'offline')
                   }`} />}
@@ -311,7 +311,7 @@ export default function Sidebar() {
                 onClick={() => setStatusMenuOpen(!statusMenuOpen)}
                 className="relative cursor-pointer group"
               >
-                  <AvatarFrame size="md" pulseStatus="none" frame={userProfile?.avatarFrame || 'none'}>
+                  <>
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden group-hover:scale-105 transition-transform">
                       {isValidPhotoURL(userProfile?.photoURL) ? (
                         <img src={getCleanPhotoURL(userProfile!.photoURL)} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
@@ -319,7 +319,7 @@ export default function Sidebar() {
                         (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
                       )}
                     </div>
-                  </AvatarFrame>
+                  </>
                 {!isSolo && <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
                   getStatusColor(userProfile?.presenceStatus || 'offline')
                 }`} />}

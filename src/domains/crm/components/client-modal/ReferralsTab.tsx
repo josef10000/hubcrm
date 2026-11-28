@@ -86,12 +86,13 @@ export default function ReferralsTab({ client, user }: ReferralsTabProps) {
               <p className="text-xs text-gray-500 mb-2">Link de Indicação do Cliente:</p>
               <div className="flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/5">
                 <code className="text-[10px] text-primary-400 truncate flex-1">
-                  {`${window.location.origin}/onboarding/${user.uid}?ref=${client.id}`}
+                  {`${window.location.origin}/onboarding/${user.uid}?ref=${client.id}&token=${client.publicToken || ''}`}
                 </code>
                 <button 
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/onboarding/${user.uid}?ref=${client.id}`);
+                    if (!client.publicToken) { toast.error('Salve novamente o cadastro para gerar um link seguro.'); return; }
+                    navigator.clipboard.writeText(`${window.location.origin}/onboarding/${user.uid}?ref=${client.id}&token=${encodeURIComponent(client.publicToken)}`);
                     toast.success('Link copiado!');
                   }}
                   className="p-1 hover:bg-white/10 rounded transition-colors text-gray-400"

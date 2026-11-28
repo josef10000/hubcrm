@@ -882,3 +882,22 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Financeiro**: cada lançamento liquidado inclui oferta e atribuição e usa uma categoria de venda ou assinatura. O webhook procura o cadastro por ID de pagamento/assinatura antes do identificador do cliente Asaas, reduzindo associação incorreta quando o comprador tem mais de um cadastro.
 - **Produtos**: a lista acompanha até 200 pedidos recentes e resume quantidade paga, valor bruto e origens UTM identificadas por produto. Esse total não é líquido de taxas e não representa todo o histórico quando houver mais de 200 pedidos.
 - **Entrega**: os dois pedidos recentes por oferta podem ser marcados manualmente como entregues. O catálogo não presume que existe uma entrega automática nem que um portal foi provisionado.
+
+## 57. Segurança do portal, limites de módulos e guia de evolução
+
+- **Data**: 28/11/2026.
+- **Guia de arquitetura**: `docs/GUIA_DE_MODULARIDADE_E_QUALIDADE.md` define fronteiras entre domínios, contratos, validação, autorização, desempenho, testes e checklist de revisão. `README.md` e `docs/ARCHITECTURE.md` apontam para o guia e descrevem a arquitetura como uma migração em andamento, não como modularização concluída.
+- **Permissões Firestore**: a checagem de permissão agora vincula perfil e organização; clientes não listam perfis internos; autocadastro não escolhe organização/cargo privilegiado; atualizações próprias protegem identidade, cargo, permissões e dados de folha; convites não são escritos pelo cliente. Clientes autenticados alteram somente `plans` do próprio cadastro.
+- **Portal público**: briefing e assinatura de contrato usam endpoints com validação Zod e token do próprio cliente. Assinatura é processada no servidor com transação para impedir assinatura duplicada. Criação e resposta a chamados validam tamanho/formato e titularidade.
+- **Arena antiga (superada)**: a decisão atual remove jogos, torneios, Trivia, loja de recompensas, XP, pontos, HubCoins, molduras e títulos de perfil. As rotas antigas redirecionam para a página inicial; documentos históricos de partidas, torneios, pedidos e saldos não são apagados automaticamente. As regras deixam de conceder acesso às coleções de partidas, torneios e loja. Chamadas WebRTC do chat permanecem, pois não fazem parte da Arena.
+- **Inicialização de cargos**: removida uma segunda chamada idêntica a `batch.commit()` no bootstrap do perfil proprietário; o lote de cargos é aplicado uma vez.
+- **Em aberto**: ainda existem superfícies públicas para revisar (por exemplo, preferências públicas, ofertas e assets). As regras alteradas nesta rodada **não foram validadas no Emulator**: o download do binário Firestore Emulator retornou HTTP 403. Não afirmar que o deploy das regras está validado até executar cenários autorizados e negados no Emulator.
+- **Verificações**: `npm run lint` (`tsc --noEmit`) e `npm run build` passaram; o build mantém avisos para os bundles principal e Canvas acima de 1 MB e imports dinâmicos/estáticos mistos. O diff passou em `git diff --check`. Nenhuma suíte de testes foi adicionada ou executada nesta revisão.
+- **Estado de qualidade**: não declarar nota global 9/10 ainda. TypeScript global não está em strict, o comando `lint` não executa ESLint, `CRMContext` segue como ponte com `any`, componentes grandes e imports cruzados permanecem, e a validação das regras é pendência de segurança.
+
+## 58. Remoção da gamificação antiga
+
+- **Decisão**: produto voltado à operação do proprietário com IAs; remover jogos, XP, pontuação e recompensas herdadas da estrutura de equipe.
+- **Removido**: Arena e seus jogos/torneios, convites e store, a loja HubCoins, Trivia premiada, molduras e títulos cosméticos, exibição de título no chat e créditos por progresso de leitura. Rotas antigas `/arena` e `/shop` redirecionam para a página inicial.
+- **Dados**: coleções e campos históricos de jogo/recompensa não foram apagados. Regras Firestore deixam de conceder acesso a partidas, torneios e itens/pedidos da loja; campos antigos de gamificação ficam protegidos contra novas alterações próprias no perfil. Chamadas WebRTC do chat continuam ativas.
+- **Validação**: `npm run lint` (`tsc --noEmit`), `npm run build` e `git diff --check` passaram após as mudanças. O build continua avisando sobre chunks acima de 1 MB e importações Firebase/helpers estáticas e dinâmicas. Firestore Emulator não foi iniciado porque o download do binário retornou HTTP 403; não publicar regras sem validar no emulador.

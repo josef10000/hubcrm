@@ -1,6 +1,6 @@
 # 🔐 HUB CENTRAL — CRM ENTERPRISE
 
-Plataforma corporativa de CRM de alta performance construída sob a arquitetura de **Modular Domain-Driven Design (DDD)** no Frontend e **Serverless Micro-services** no Backend. O sistema foi desenvolvido para centralizar a operação de vendas, gestão de equipes, conformidade ética (Compliance) e automação financeira integrada a bancos reais.
+Plataforma de operação empresarial que reúne CRM, projetos, atendimento, financeiro e ferramentas internas. O código está organizado por domínios e segue em migração para limites mais estritos entre módulos; novas implementações devem seguir o [Guia de Modularidade e Qualidade](./docs/GUIA_DE_MODULARIDADE_E_QUALIDADE.md), que registra os padrões e as prioridades técnicas atuais.
 
 ---
 
@@ -13,6 +13,7 @@ Plataforma corporativa de CRM de alta performance construída sob a arquitetura 
 6. [Configuração de Variáveis de Ambiente](#-configura%C3%A7%C3%A3o-de-vari%C3%A5veis-de-ambiente-env)
 7. [Como Rodar e Validar o Projeto](#-como-rodar-e-validar-o-projeto)
 8. [🚀 Roadmap: Direct Response & WhatsApp X1](./docs/ROADMAP_DIRECT_RESPONSE_WHATSAPP.md)
+9. [Guia de modularidade e qualidade](./docs/GUIA_DE_MODULARIDADE_E_QUALIDADE.md)
 
 ---
 
@@ -84,7 +85,7 @@ Fluxo financeiro sem erro humano e categorização contábil autônoma:
 
 ### 7. 📢 Mural de Comunicados Gerenciável & Central Comunitária (Bento Grid)
 Integração e cultura corporativa de alto impacto:
-*   **Central Hub Matinal (Home):** Layout bento-grid de abertura do CRM com visual Glassmorphism contendo cotações em tempo real, calendário de animes (lançamento geek) com busca inteligente (autocomplete Jikan), agenda semanal de reuniões em tempo real (`FeedSchedule.tsx`) e o Desafio da Trivia Geral (`FeedTrivia.tsx`) reformulado com 40 perguntas locais em Português do Brasil, que premia o colaborador com 50 Hub Coins por acerto uma vez ao dia com trava de persistência no Firestore.
+*   **Central Hub Matinal (Home):** Layout bento-grid de abertura do CRM com visual Glassmorphism contendo cotações em tempo real, calendário de animes (lançamento geek) com busca inteligente (autocomplete Jikan) e agenda semanal de reuniões em tempo real (`FeedSchedule.tsx`).
 *   **Mural de Avisos Dinâmico (Painel Administrativo):** Painel que permite criar, editar e excluir comunicados do time, com opção de destaque urgente em Glow Neon âmbar. O gerenciamento foi unificado no painel do administrador sob duas sub-abas:
     *   **Mural do Time:** Avisos internos para todos os colaboradores (CRUD do `AnnouncementManager`).
     *   **Aviso do Portal (Clientes):** Formulário dedicado para emitir avisos globais (como recesso, fim de ano e atualizações) exibidos no topo do portal corporativo de todos os clientes, persistidos em tempo real na raiz da organização.
@@ -99,13 +100,7 @@ Módulo especializado integrado a Pessoas & Cultura para controle patrimonial f�
 *   **Impressão Térmica de Etiquetas (50x30mm):** Layout otimizado em CSS `@media print` para impressoras térmicas físicas de patrimônio. A etiqueta divide-se em duas metades: à esquerda, o QR Code de alta precisão; à direita, a marca da empresa, nome do ativo, código patrimonial, nome do colaborador portador e seu cargo.
 *   **Portal Público de Patrimônio:** Rota livre de autenticação e exposta de forma segura no Firestore (`allow get: if true`) que permite que qualquer pessoa ou câmera de celular escaneie o equipamento e visualize imediatamente quem é a empresa proprietária do item, a data de aquisição do patrimônio e a identificação do colaborador responsável atualmente pela sua custódia (com nome, cargo e data/hora do recebimento).
 
-### 9. 🎲 Arena de Jogos Multiplayer & Lobbies Online
-Módulo de descompressão integrado voltado para gamificação e cultura da equipe:
-*   **Lobbies Multi-jogador (Ludo):** Criação de salas de espera reativas no Firestore para até 4 jogadores humanos simultâneos. O Host tem total autonomia para preencher slots vagos com robôs inteligentes (CPU) e convidar colegas da empresa.
-*   **Inteligência Artificial Baseada no Host:** Execução de IA de robôs no cliente do Host, sincronizando decisões e dados no Firestore para todos os participantes em tempo real.
-*   **Casas Seguras & Regras Clássicas:** Motor de regras de Ludo completo com validações rígidas de barreiras (bloqueio de passagem/parada para 2+ peças da mesma cor) e casas seguras (impedindo a captura em saídas e intermediárias com estrelas neon piscantes), além de turnos extras estritos para jogadas de dado de valor 6.
-
-### 10. 🎨 Fábrica de Sites & Projetos (Módulo Operacional Unificado)
+### 9. 🎨 Fábrica de Sites & Projetos (Módulo Operacional Unificado)
 Integração operacional que centraliza o acompanhamento de entregas de sites com uma central de templates e prompts de IA:
 *   **Acompanhamento de Projetos:** Monitoramento em tempo real do progresso de desenvolvimento dos clientes vindos do CRM, com medição de SLA e acompanhamento de estágios de entrega.
 *   **Catálogo de Templates White Label (R2/Cloudinary):** Armazenamento estrutural de layouts focado em nicho e tipo (Landing Page, SaaS, Institucional), com envio opcional de print de preview e colagem/edição direta de códigos HTML/CSS/JS.
@@ -113,14 +108,13 @@ Integração operacional que centraliza o acompanhamento de entregas de sites co
 *   **Biblioteca de Prompts Globais de IA:** Biblioteca modular de prompts de engenharia reversa para o Gemini Canvas. Permite inserir variáveis dinâmicas no cursor e associar o prompt de forma dinâmica apenas na tela de geração ao cliente (Split Screen), gerando um prompt final completo e polido com 1 clique.
 *   **Execução de Demos Locais:** Abertura e renderização dos templates em uma nova aba usando injeção direta via JavaScript (`document.write`), permitindo visualizar a demo estática do catálogo ou a demo personalizada com as variáveis informadas do cliente já substituídas.
 
-### 11. 📚 Nexus Hub — Biblioteca de Sabedoria Corporativa & Gamificação
-Plataforma integrada de incentivo à leitura e gestão de conhecimento corporativo com mecânicas avançadas de gamificação:
+### 10. 📚 Nexus Hub — Biblioteca e Gestão do Conhecimento
+Plataforma integrada para organizar leituras e conhecimento, sem recompensas ou pontuação:
 *   **Gerenciamento de Estante (LibraryTab):** Organiza o catálogo de livros corporativos, leituras recomendadas e obras da comunidade corporativa em layouts dinâmicos e fluidos de grade ou lista.
 *   **Estilo Visual 3D Realista (Lombada):** Nova tecnologia de renderização tridimensional nativa no CSS (`Book.tsx`) baseada no design clássico de Ali Imam. Exibe cada obra com lombadas em degradê tridimensional, miolo de folhas detalhado nas laterais, contracapa com profundidade física real calculada pela contagem de páginas do livro, e um marcador de páginas (Bookmark) flutuante reativo para obras favoritadas.
-*   **Sincronização com Clubes de Leitura & Trilhas:** Monitoramento em tempo real do progresso de leitura dos colaboradores. O progresso é sincronizado de forma bidirecional com os Clubes de Leitura da organização e com as Trilhas de Conhecimento Ativas.
-*   **Recompensas em HubCoins por Página Nova:** Sistema cognitivo de incentivo à leitura com trava temporal de segurança de 24 horas por obra, que concede HubCoins de forma proporcional a cada página lida inédita do colaborador, integrada ao seu saldo e ranking na Arena.
+*   **Sincronização com Clubes de Leitura & Trilhas:** Monitoramento em tempo real do progresso de leitura dos participantes, sincronizado com os Clubes de Leitura da organização e com as Trilhas de Conhecimento Ativas.
 
-### 12. 🎨 Experiência do Usuário (UX) & Componentes Premium Refinados
+### 11. 🎨 Experiência do Usuário (UX) & Componentes Premium Refinados
 Plataforma modernizada com foco em usabilidade e performance, integrando componentes estilizados com Tailwind CSS e ícones premium para interações de alta performance e visual impecável:
 *   **Comemorações com Balões Flutuantes (`balloons-js`):** Efeito estético festivo com balões flutuantes que sobe na tela do colaborador no dia do seu aniversário.
 *   **Medidores de Armazenamento Reativos (Nativos Refinados):** Painel administrativo de controle de consumo ("Consumo") com barras de progresso nativas HTML5 altamente customizadas e estilizadas para exibir a volumetria em tempo real das nuvens Firebase, Cloudflare R2 e Cloudinary com sinalização visual clara de limite de uso.
@@ -203,6 +197,8 @@ O sistema de Ponto Eletrônico e Fechamento de Folha processa e valida dados de 
 ---
 
 ## ⚙️ Arquitetura Técnica & Fluxo de Dados
+
+Para a situação atual da arquitetura, regras para novas implementações e etapas de migração, consulte [`docs/GUIA_DE_MODULARIDADE_E_QUALIDADE.md`](./docs/GUIA_DE_MODULARIDADE_E_QUALIDADE.md) e [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 O sistema opera de forma integrada utilizando reatividade no frontend e processamento serverless no backend:
 

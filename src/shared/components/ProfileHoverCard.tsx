@@ -6,7 +6,7 @@ import { Clock, Coffee, Shield, Globe, Users, Circle, Calendar } from 'lucide-re
 import { db } from '@/lib/firebase';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { getCleanPhotoURL } from './AvatarFrame';
+import { getCleanPhotoURL } from '@shared/utils/avatar';
 
 interface ProfileHoverCardProps {
   userId: string;

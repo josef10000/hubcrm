@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { doc, getDoc, setDoc, updateDoc, collection } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
@@ -11,6 +11,7 @@ export default function OnboardingForm() {
   const { orgId, clientId } = useParams<{ orgId: string, clientId?: string }>();
   const [searchParams] = useSearchParams();
   const referralId = searchParams.get('ref');
+  const accessToken = searchParams.get('token');
   const [loading, setLoading] = useState(true);
   const [clientNotFound, setClientNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -52,10 +53,17 @@ export default function OnboardingForm() {
         }
 
         if (clientId) {
-          const clientRef = doc(db, 'organizations', orgId, 'clients', clientId);
-          const clientSnap = await getDoc(clientRef);
-          if (clientSnap.exists()) {
-            const data = clientSnap.data();
+          if (!accessToken) {
+            setClientNotFound(true);
+            return;
+          }
+          const response = await fetch('/api/portal_handler', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'onboarding_get', orgId, clientId, token: accessToken })
+          });
+          if (response.ok) {
+            const { client: data } = await response.json();
             setBasicData({
               name: data.name || '',
               email: data.email || '',
@@ -80,11 +88,15 @@ export default function OnboardingForm() {
       }
     };
     fetchData();
-  }, [orgId, clientId]);
+  }, [orgId, clientId, accessToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgId) return;
+    if (!accessToken) {
+      toast.error('Este link de formulário não tem um token de acesso válido. Solicite um novo link.');
+      return;
+    }
     
     // Validate required dynamic questions
     for (const q of questions) {
@@ -96,47 +108,29 @@ export default function OnboardingForm() {
 
     setSubmitting(true);
     try {
-      if (clientId) {
-        const clientRef = doc(db, 'organizations', orgId, 'clients', clientId);
-        await updateDoc(clientRef, {
-          name: basicData.name,
-          email: basicData.email,
-          whatsapp: basicData.whatsapp,
-          cpfCnpj: basicData.cpfCnpj,
-          onboardingAnswers: answers,
-          referredBy: referralId || null
-        });
-        setSuccess(true);
-      } else if (referralId) {
-        // Create new client from referral
-        const newClientRef = doc(collection(db, 'organizations', orgId, 'clients'));
-        const newClientId = newClientRef.id;
-        
-        await setDoc(newClientRef, {
-          id: newClientId,
-          name: basicData.name,
-          email: basicData.email,
-          whatsapp: basicData.whatsapp,
-          cpfCnpj: basicData.cpfCnpj,
-          plan: basicData.plan,
-          status: 'Em Desenvolvimento',
-          createdAt: Date.now(),
-          onboardingAnswers: answers,
-          referredBy: referralId
-        });
-
-        // Create referral record
-        const referralRef = doc(collection(db, 'organizations', orgId, 'referrals'));
-        await setDoc(referralRef, {
-          id: referralRef.id,
-          referrerId: referralId,
-          referredClientId: newClientId,
-          status: 'pending',
-          createdAt: Date.now()
-        });
-
-        setSuccess(true);
-      }
+      const response = await fetch('/api/portal_handler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'onboarding_submit',
+          orgId,
+          clientId,
+          referralId,
+          token: accessToken,
+          basicData: {
+            name: basicData.name,
+            email: basicData.email,
+            whatsapp: basicData.whatsapp,
+            cpfCnpj: basicData.cpfCnpj,
+            plan: basicData.plan,
+            billingCycle: basicData.billingCycle
+          },
+          answers
+        })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Não foi possível enviar suas informações.');
+      setSuccess(true);
     } catch (error) {
       console.error("Error submitting onboarding:", error);
       toast.error('Erro ao enviar formulário. Tente novamente.');

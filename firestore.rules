@@ -29,9 +29,19 @@ service cloud.firestore {
     // Nota: O cache de 'permissions' no perfil evita o custo de get() extras em regras frequentes
     function hasPermission(orgId, perm) {
       let userData = getUserData();
-      return isOwnerEmail() || 
+      return isOwnerEmail() || (isAuthenticated() && userData.orgId == orgId && (
              (userData.permissions != null && perm in userData.permissions) ||
-             (userData.roleId != null && get(/databases/$(database)/documents/organizations/$(orgId)/roles/$(userData.roleId)).data.permissions.hasAny([perm]));
+             (userData.roleId != null && get(/databases/$(database)/documents/organizations/$(orgId)/roles/$(userData.roleId)).data.permissions.hasAny([perm]))));
+    }
+
+    // Perfil de cliente vinculado: acesso restrito à própria organização e ao próprio cadastro.
+    function isLinkedClient(orgId, clientId) {
+      return isAuthenticated() && getUserData().orgId == orgId &&
+             getUserData().role == 'client_admin' && getUserData().clientId == clientId;
+    }
+
+    function isClientPortalUser(orgId) {
+      return isAuthenticated() && getUserData().orgId == orgId && getUserData().role == 'client_admin';
     }
 
     // Função legada para compatibilidade em áreas ainda não migradas 100%
@@ -45,18 +55,37 @@ service cloud.firestore {
 
     // Perfis Individuais
     // Leitura: apenas o dono ou membros da mesma organização (necessário para chat, equipe, etc.)
-    // Escrita genérica: apenas o próprio dono do perfil
-    // Escrita administrativa: admin pode alterar apenas roleId e permissions de membros da sua org
+    // O usuário pode editar campos pessoais, mas identidade, organização, papel e dados de folha são protegidos.
+    // Perfis de novos usuários só podem nascer como pendentes e somente leitura; convites são criados pelo backend.
     match /profiles/{userId} {
       allow read: if isOwnerEmail() || (request.auth != null && request.auth.uid == userId) || 
                     (isAuthenticated() && resource != null && resource.data != null && resource.data.orgId != null && 
-                     resource.data.orgId == getUserData().orgId);
+                     resource.data.orgId == getUserData().orgId && getUserData().role != 'client_admin');
       
-      // O próprio dono pode editar tudo no seu perfil
-      allow write: if isOwnerEmail() || request.auth.uid == userId;
+      allow create: if isOwnerEmail() || (
+        isAuthenticated() && request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly(['uid', 'email', 'displayName', 'orgId', 'role', 'createdAt']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.orgId == 'pending' &&
+        request.resource.data.role is map && request.resource.data.role.id == 'ROLE_READONLY'
+      );
+
+      allow update: if isOwnerEmail() || (
+        isAuthenticated() && request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'uid', 'orgId', 'roleId', 'permissions', 'role', 'clientId', 'isAdmin', 'isOwner', 'owner',
+          'avatarFrame', 'unlockedFrames', 'xp', 'level', 'points', 'arenaCredits', 'unlockedTitles',
+          'activeTitle', 'lastTriviaCompletedDate', 'claimedReadingClubs',
+          'salary', 'healthInsurance', 'mealVoucher', 'transportVoucher', 'homeOfficeAux', 'benefitDeductions',
+          'pixKeyType', 'pixKey', 'bankAccount', 'resignationDetails', 'contractType', 'startDate', 'department',
+          'reportsTo'
+        ])
+      );
+      allow delete: if isOwnerEmail();
       
       // Admin da org pode alterar APENAS roleId e permissions (gestão de equipe)
-      allow update: if isAuthenticated() && resource.data.orgId != null && 
+      allow update: if isAuthenticated() && resource.data.orgId != null && belongsToOrg(resource.data.orgId) &&
                       isOrgAdmin(resource.data.orgId) &&
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'permissions', 'role', 'updatedAt']);
 
@@ -613,18 +642,6 @@ service cloud.firestore {
 
       // Outros dados dentro da organização (Regras Granulares)
 
-      // 🟢 HUB SHOP — Loja de Recompensas
-      match /hubShopItems/{itemId} {
-        allow read: if isOwnerEmail() || belongsToOrg(orgId);
-        allow write: if isOwnerEmail() || isOrgAdmin(orgId);
-      }
-
-      match /hubShopOrders/{orderId} {
-        allow read: if isOwnerEmail() || belongsToOrg(orgId) && (request.auth.uid == resource.data.userId || isOrgAdmin(orgId));
-        allow create: if isOwnerEmail() || belongsToOrg(orgId) && request.auth.uid == request.resource.data.userId;
-        allow update, delete: if isOwnerEmail() || isOrgAdmin(orgId);
-      }
-
       // 📚 TRILHAS DE CONHECIMENTO — Nexus Core
       match /learningPaths/{pathId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);
@@ -657,16 +674,20 @@ service cloud.firestore {
       }
 
       match /clients/{id} {
-        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS') || (belongsToOrg(orgId) && resource.data.assignedTo == request.auth.uid) || (isAuthenticated() && getUserData().clientId == id);
-        allow get: if true;
-        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS');
-        allow update: if request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'referralRewardType', 'currentDiscount', 'accessKey', 'portalLinked', 'portalEmail', 'portalUserUid', 'portalLinkedAt']);
+        allow read: if isOwnerEmail() ||
+          (belongsToOrg(orgId) && hasPermission(orgId, 'MANAGE_CLIENTS')) ||
+          (belongsToOrg(orgId) && resource.data.assignedTo == request.auth.uid) ||
+          isLinkedClient(orgId, id);
+        allow create, delete: if isOwnerEmail() || (belongsToOrg(orgId) && hasPermission(orgId, 'MANAGE_CLIENTS'));
+        allow update: if isOwnerEmail() ||
+          (belongsToOrg(orgId) && hasPermission(orgId, 'MANAGE_CLIENTS')) ||
+          (isLinkedClient(orgId, id) && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['plans']));
       }
 
       // 📚 HUB DE CRESCIMENTO — Ativos Globais
       match /growth_assets/{assetId} {
-        allow read: if belongsToOrg(orgId) || isAuthenticated(); // Leitura para membros ou clientes autenticados
+        allow read: if belongsToOrg(orgId) || isClientPortalUser(orgId);
         allow write: if isOwnerEmail() || isOrgAdmin(orgId) || hasPermission(orgId, 'MANAGE_CLIENTS');
       }
 
@@ -794,22 +815,30 @@ service cloud.firestore {
     
     // Suporte (Portal do Cliente)
     match /organizations/{orgId}/supportRequests/{requestId} {
-      // Qualquer um pode criar chamados de suporte (portal público)
-      allow create: if true;
-      
-      // Leitura aberta — o portal do cliente não é membro da org,
-      // então precisa de acesso público para consultar seus chamados.
-      allow read: if true;
-      
-      // A equipe pode fazer qualquer update.
-      // O portal pode atualizar campos de mensagem e limpar a resposta do consultor.
-      allow update: if belongsToOrg(orgId) ||
-                       (resource != null && 
-                        request.resource.data.diff(resource.data).affectedKeys()
-                          .hasOnly(['message', 'status', 'updatedAt', 'reply', 'repliedAt']));
-      
-      // Apenas a equipe pode excluir (não o cliente)
-      allow delete: if belongsToOrg(orgId) && getUserData().role != 'client_admin';
+      function supportStaff() {
+        return isOwnerEmail() || (belongsToOrg(orgId) && hasPermission(orgId, 'MANAGE_SUPPORT'));
+      }
+
+      allow read: if supportStaff() || isLinkedClient(orgId, resource.data.clientId);
+      allow create: if supportStaff() || (
+        isLinkedClient(orgId, request.resource.data.clientId) &&
+        request.resource.data.keys().hasOnly([
+          'clientId', 'clientName', 'category', 'priority', 'message', 'imageUrl', 'status', 'origin', 'createdAt'
+        ]) &&
+        request.resource.data.status == 'aberto' && request.resource.data.origin == 'portal' &&
+        request.resource.data.category is string && request.resource.data.category.size() <= 80 &&
+        request.resource.data.priority in ['baixa', 'media', 'alta'] &&
+        request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 4000 &&
+        request.resource.data.get('imageUrl', '') is string && request.resource.data.get('imageUrl', '').size() <= 2048 &&
+        request.resource.data.createdAt is timestamp
+      );
+      allow update: if supportStaff() || (
+        isLinkedClient(orgId, resource.data.clientId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['message', 'updatedAt']) &&
+        request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 4000 &&
+        request.resource.data.updatedAt is timestamp
+      );
+      allow delete: if supportStaff();
     }
 
     // Propostas Comerciais (Root Collection)
@@ -817,32 +846,74 @@ service cloud.firestore {
       // Leitura pública permitida para o link da proposta funcionar
       allow get: if true;
       // Listagem permitida apenas para membros da organização
-      allow list: if isAuthenticated() && (isOwnerEmail() || resource.data.orgId == getUserData().orgId);
+      allow list: if isOwnerEmail() || (belongsToOrg(resource.data.orgId) && hasPermission(resource.data.orgId, 'MANAGE_LEADS'));
       // Criação permitida apenas para membros da organização
-      allow create: if isAuthenticated() && (isOwnerEmail() || request.resource.data.orgId == getUserData().orgId);
-      // Atualização permitida para membros da organização OU pelo cliente (apenas campos de aceite)
-      allow update: if (isAuthenticated() && (isOwnerEmail() || resource.data.orgId == getUserData().orgId)) ||
-                     (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'viewedAt', 'approvedAt', 'acceptanceMetadata', 'items', 'totalAmount']));
+      allow create: if isOwnerEmail() ||
+        (belongsToOrg(request.resource.data.orgId) && hasPermission(request.resource.data.orgId, 'MANAGE_LEADS'));
+      // Link público pode registrar somente a primeira visualização; aprovação é processada pela API.
+      allow update: if (belongsToOrg(resource.data.orgId) && hasPermission(resource.data.orgId, 'MANAGE_LEADS')) ||
+        (resource.data.status == 'sent' && request.resource.data.status == 'viewed' &&
+         request.resource.data.viewedAt is timestamp &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'viewedAt']));
     }
 
-    // Regras para Arena e Comunicação (Jogos e Chamadas)
-    match /matches/{matchId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /tournaments/{tournamentId} {
-      allow read, write: if isAuthenticated();
-    }
+    // Convites de equipe podem ser consultados somente pelo e-mail convidado;
+    // criação, aceite e revogação usam Firebase Admin no backend.
     match /convites/{inviteId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated() && resource.data.email == request.auth.token.email;
+      allow create, update, delete: if false;
     }
+
+    // Sinalização WebRTC contém oferta SDP e candidates de rede; só os dois
+    // participantes da chamada podem consultar ou alterar o documento.
     match /calls/{callId} {
-      allow read, write: if isAuthenticated();
+      function isCallParticipant(data) {
+        return isAuthenticated() &&
+          (request.auth.uid == data.callerId || request.auth.uid == data.calleeId);
+      }
+
+      function validCallStatusTransition() {
+        let oldStatus = resource.data.status;
+        let newStatus = request.resource.data.status;
+        return newStatus == oldStatus ||
+          (request.auth.uid == resource.data.calleeId && oldStatus == 'calling' && newStatus in ['answered', 'rejected']) ||
+          (request.auth.uid in [resource.data.callerId, resource.data.calleeId] &&
+            oldStatus in ['calling', 'answered'] && newStatus == 'ended');
+      }
+
+      allow get, list: if isCallParticipant(resource.data);
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly([
+          'callerId', 'calleeId', 'status', 'createdAt', 'callType', 'offer', 'callerCandidates', 'calleeCandidates'
+        ]) &&
+        request.resource.data.callerId == request.auth.uid &&
+        request.resource.data.calleeId is string && request.resource.data.calleeId != request.auth.uid &&
+        request.resource.data.status == 'calling' && request.resource.data.createdAt is int &&
+        request.resource.data.callType in ['audio', 'video'] &&
+        request.resource.data.offer.type == 'offer' && request.resource.data.offer.sdp is string &&
+        request.resource.data.offer.sdp.size() <= 100000 &&
+        request.resource.data.callerCandidates is list && request.resource.data.callerCandidates.size() <= 300 &&
+        request.resource.data.calleeCandidates is list && request.resource.data.calleeCandidates.size() <= 300;
+      allow update: if isCallParticipant(resource.data) &&
+        request.resource.data.callerId == resource.data.callerId &&
+        request.resource.data.calleeId == resource.data.calleeId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'answer', 'callerCandidates', 'calleeCandidates'
+        ]) && validCallStatusTransition() &&
+        request.resource.data.callerCandidates is list && request.resource.data.callerCandidates.size() <= 300 &&
+        request.resource.data.calleeCandidates is list && request.resource.data.calleeCandidates.size() <= 300 &&
+        (request.resource.data.status != 'answered' ||
+          (request.resource.data.answer.type == 'answer' && request.resource.data.answer.sdp is string &&
+           request.resource.data.answer.sdp.size() <= 100000));
+      allow delete: if false;
     }
+
 
     // 📚 CENTRAL DE INSIGHTS — Blog/Artigos Globais
     match /blog_posts/{postId} {
       allow read: if true;
-      allow write: if isOwnerEmail() || isAuthenticated();
+      allow write: if isOwnerEmail() || (isAuthenticated() &&
+        (hasPermission(getUserData().orgId, 'MANAGE_CLIENTS') || hasPermission(getUserData().orgId, 'MANAGE_SETTINGS')));
     }
   }
 }

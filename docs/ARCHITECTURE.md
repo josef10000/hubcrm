@@ -1,10 +1,10 @@
-# 🏛️ HubCRM: Arquitetura Enterprise (v8.4.0)
+# 🏛️ HubCRM: Arquitetura e direção técnica
 
-Este documento define os padrões técnicos e a fundação do ecossistema HubCRM.
+Este documento registra a arquitetura em uso e a direção técnica do ecossistema HubCRM. **Nem todas as metas abaixo estão plenamente aplicadas no código atual.** Para novas funcionalidades e refatorações, siga também o [Guia de Modularidade e Qualidade](./GUIA_DE_MODULARIDADE_E_QUALIDADE.md), que define os limites de módulos e o checklist de implementação.
 
 ## 🏗️ 1. Princípios de Design
 O sistema é construído sobre três pilares fundamentais:
-- **Modular DDD (Domain-Driven Design):** Desacoplamento total entre CRM, Financeiro, Wiki e Suporte.
+- **Módulos por domínio:** CRM, Financeiro, Wiki e Suporte têm áreas próprias; ainda existem imports cruzados e pontes de compatibilidade em migração.
 - **Serverless First:** Toda a lógica pesada reside em Edge Functions na Vercel para latência mínima.
 - **Realtime Sync:** Sincronização em tempo real via Firestore Listeners.
 
@@ -53,7 +53,7 @@ O sistema utiliza **Role-Based Access Control** (RBAC) centralizado.
 ## 🛠️ 5. Padrões de Engenharia (Code Control)
 Para manter o sistema sob controle e evitar dívidas técnicas:
 - **Comunicação Segura:** É proibido o uso de `fetch` ou `axios` puro nos componentes. Use `authFetch` (autenticado) ou `apiClient` (público).
-- **Tipagem Estrita:** O uso de `any` é proibido. Utilize as interfaces centralizadas em `/shared`.
+- **Tipagem:** Novas fronteiras devem evitar `any` e validar dados externos. A aplicação existente ainda está migrando para tipagem estrita.
 - **Validação de Contratos:** Toda entrada de API deve ter um esquema **Zod** correspondente para validação antes do processamento.
 - **Desacoplamento:** Lógicas complexas não devem residir nos Handlers de API; devem ser movidas para `api/_logic`.
 - **Observabilidade:** Erros críticos e mutações financeiras devem sempre ser registrados via `logActivity` e `Logger.error`.

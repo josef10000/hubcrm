@@ -96,7 +96,6 @@ export interface UserProfile {
   // Personalization & Well-being
   wallpaperUrl?: string;
   soundTheme?: 'none' | 'zen' | 'tech';
-  avatarFrame?: 'none' | 'neon' | 'gold' | 'floral' | 'cyberpunk' | 'ruby' | 'ocean' | 'dark' | 'rainbow' | 'silver';
   myCorner?: {
     phrase: string;
     links: { title: string; url: string }[];
@@ -152,14 +151,7 @@ export interface UserProfile {
   // Library Integration
   readingProgress?: Record<string, { currentPage: number; totalPages: number }>;
 
-  // Arena Gamification & Economy
-  arenaCredits?: number;
-  unlockedTitles?: string[];
-  activeTitle?: string;
-  unlockedFrames?: string[];
   department?: string;
-  claimedReadingClubs?: string[];
-  lastTriviaCompletedDate?: string;
 }
 
 export interface UserContract {
@@ -840,36 +832,6 @@ export interface BroadcastPayload {
   uids: string[];
   hasButton: boolean;
   buttonUrl?: string;
-}
-
-// ── Torneios Eliminatórios (Hub Arena) ──────────────────────────────────────────
-
-export interface TournamentMatch {
-  matchId: string | null;
-  p1: string | null;
-  p1Name?: string;
-  p2: string | null;
-  p2Name?: string;
-  winnerId?: string | null;
-}
-
-export interface TournamentBracket {
-  quarterfinals?: TournamentMatch[];
-  semifinals: TournamentMatch[];
-  final: TournamentMatch;
-}
-
-export interface Tournament {
-  id: string;
-  name: string;
-  gameType: 'chess' | 'checkers' | 'connect4' | 'ludo';
-  status: 'registration' | 'active' | 'finished';
-  maxPlayers: 4 | 8;
-  participants: string[];
-  bracket: TournamentBracket;
-  winnerId?: string | null;
-  orgId: string;
-  createdAt: number;
 }
 
 // ── Laboratório de Ofertas ──────────────────────────────────────────────────────

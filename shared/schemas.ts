@@ -27,7 +27,6 @@ export const teamUpdateProfileSchema = z.object({
     instagram: z.string().optional(),
     linkedin: z.string().optional(),
     photoURL: z.string().optional(),
-    avatarFrame: z.string().optional(),
     startDate: z.string().optional(),
     jobTitle: z.string().optional(),
     roleId: z.string().optional(),
@@ -84,6 +83,60 @@ export const portalFinanceSchema = z.object({
   clientId: z.string().min(1),
   token: z.string().min(32, 'Token de segurança inválido ou ausente')
 });
+
+export const publicSupportAccessSchema = z.object({
+  orgId: z.string().min(1).max(128),
+  clientId: z.string().min(1).max(128),
+  token: z.string().min(32).max(256)
+});
+
+export const publicSupportCreateSchema = publicSupportAccessSchema.extend({
+  action: z.literal('support_create'),
+  category: z.string().trim().min(1).max(80),
+  priority: z.enum(['baixa', 'media', 'alta']),
+  subject: z.string().trim().min(1).max(160),
+  message: z.string().trim().min(1).max(4000),
+  imageUrl: z.string().url().max(2048).optional().or(z.literal(''))
+}).strict();
+
+export const publicSupportReplySchema = publicSupportAccessSchema.extend({
+  action: z.literal('support_reply'),
+  requestId: z.string().min(1).max(128),
+  message: z.string().trim().min(1).max(4000)
+}).strict();
+
+export const onboardingAccessSchema = z.object({
+  orgId: z.string().min(1).max(128),
+  clientId: z.string().min(1).max(128),
+  token: z.string().min(32).max(256)
+});
+
+const publicOnboardingFieldsSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+  email: z.string().trim().email().max(254),
+  whatsapp: z.string().trim().min(8).max(32),
+  cpfCnpj: z.string().trim().max(32).optional().default(''),
+  plan: z.enum(['Essencial', 'Profissional', 'Personalizado']).default('Essencial'),
+  billingCycle: z.enum(['MONTHLY', 'YEARLY']).default('MONTHLY')
+});
+
+export const onboardingSubmitSchema = z.object({
+  orgId: z.string().min(1).max(128),
+  clientId: z.string().min(1).max(128).optional(),
+  referralId: z.string().min(1).max(128).optional(),
+  token: z.string().min(32).max(256),
+  basicData: publicOnboardingFieldsSchema,
+  answers: z.record(z.string().max(128), z.string().max(4000)).default({})
+}).refine(data => Boolean(data.clientId || data.referralId), {
+  message: 'Informe o cliente ou a indicação vinculada ao formulário.'
+}).refine(data => Object.keys(data.answers).length <= 100, {
+  message: 'O formulário excede o limite de respostas.'
+});
+
+export const portalSignContractSchema = onboardingAccessSchema.extend({
+  action: z.literal('portal_sign_contract'),
+  contractId: z.string().min(1).max(128)
+}).strict();
 
 // ── Helper para validação segura na API ──────────────────────────────────────────
 

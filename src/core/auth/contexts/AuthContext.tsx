@@ -107,7 +107,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                       batch.set(roleDocRef, roleData);
                     });
                     await batch.commit();
-                    await batch.commit();
                   }
                 } catch (err) {
                   console.error("[Auth] Erro ao instanciar cargos:", err);

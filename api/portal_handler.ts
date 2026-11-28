@@ -2,7 +2,16 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { admin, db } from './_utils/firebase.js';
 import { asaasRequest, safeErrorResponse, AsaasApiError } from './_utils/asaas.js';
 import type { ClientBase } from '../shared/types.js';
-import { portalFinanceSchema, validateSchema } from '../shared/schemas.js';
+import {
+  portalFinanceSchema,
+  publicSupportAccessSchema,
+  publicSupportCreateSchema,
+  publicSupportReplySchema,
+  validateSchema
+} from '../shared/schemas.js';
+import { getOnboardingClient, submitOnboarding } from './_logic/portal/onboarding.js';
+import { signPortalContract } from './_logic/portal/contracts.js';
+import { PortalRequestError } from './_logic/portal/errors.js';
 
 /**
  * Unified Portal Handler
@@ -35,6 +44,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
+    if (req.body.action === 'portal_sign_contract') {
+      try {
+        const result = await signPortalContract(req.body, req);
+        return res.status(200).json(result);
+      } catch (error) {
+        const statusCode = error instanceof PortalRequestError ? error.statusCode : 500;
+        console.error('[PortalContract] Falha ao assinar contrato:', error);
+        return res.status(statusCode).json({ error: statusCode === 500 ? 'Não foi possível assinar o contrato.' : (error as Error).message });
+      }
+    }
+    if (req.body.action === 'onboarding_get') {
+      try {
+        const client = await getOnboardingClient(req.body);
+        return res.status(200).json({ success: true, client });
+      } catch (error) {
+        const statusCode = error instanceof PortalRequestError ? error.statusCode : 500;
+        console.error('[PortalOnboarding] Falha ao carregar briefing:', error);
+        return res.status(statusCode).json({ error: statusCode === 500 ? 'Não foi possível carregar o formulário.' : (error as Error).message });
+      }
+    }
+    if (req.body.action === 'onboarding_submit') {
+      try {
+        const result = await submitOnboarding(req.body);
+        return res.status(200).json({ success: true, ...result });
+      } catch (error) {
+        const statusCode = error instanceof PortalRequestError ? error.statusCode : 500;
+        console.error('[PortalOnboarding] Falha ao salvar briefing:', error);
+        return res.status(statusCode).json({ error: statusCode === 500 ? 'Não foi possível enviar suas informações.' : (error as Error).message });
+      }
+    }
     if (req.body.action === 'public_confirm_appointment') {
       return handlePublicConfirmAppointment(req, res);
     }
@@ -1159,19 +1198,18 @@ async function handleCheckoutBoleto(req: VercelRequest, res: VercelResponse) {
 // ============================================================
 
 async function validateSupportAccess(req: VercelRequest) {
-  const orgId = req.method === 'POST' ? req.body.orgId : req.query.orgId;
-  const clientId = req.method === 'POST' ? req.body.clientId : req.query.clientId;
-  const token = req.method === 'POST' ? req.body.token : req.query.token;
-
-  if (!orgId || !clientId || !token) {
+  const rawInput = req.method === 'POST' ? req.body : req.query;
+  const parsed = publicSupportAccessSchema.safeParse(rawInput);
+  if (!parsed.success) {
     throw new AsaasApiError(400, 'Missing security parameters', 'Parâmetros de segurança ausentes');
   }
+  const { orgId, clientId, token } = parsed.data;
 
   const clientDoc = await db
     .collection('organizations')
-    .doc(String(orgId))
+    .doc(orgId)
     .collection('clients')
-    .doc(String(clientId))
+    .doc(clientId)
     .get();
 
   if (!clientDoc.exists) {
@@ -1184,28 +1222,27 @@ async function validateSupportAccess(req: VercelRequest) {
     throw new AsaasApiError(403, 'Invalid publicToken', 'Acesso não autorizado ou link expirado');
   }
 
-  return { clientData };
+  return { clientData, orgId, clientId };
 }
 
 async function handleSupportCreate(req: VercelRequest, res: VercelResponse) {
   try {
+    const parsed = publicSupportCreateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Os dados do chamado são inválidos.' });
+    const input = parsed.data;
     const { clientData } = await validateSupportAccess(req);
-    const { orgId, clientId, category, priority, subject, message } = req.body;
-
-    if (!category || !priority || !subject || !message) {
-      return res.status(400).json({ error: 'Parâmetros ausentes: category, priority, subject e message são obrigatórios.' });
-    }
 
     const docRef = await db
       .collection('organizations')
-      .doc(String(orgId))
+      .doc(input.orgId)
       .collection('supportRequests')
       .add({
-        clientId,
+        clientId: input.clientId,
         clientName: clientData.name || '',
-        category,
-        priority,
-        message: `${subject}: ${message}`,
+        category: input.category,
+        priority: input.priority,
+        message: `${input.subject}: ${input.message}`,
+        ...(input.imageUrl ? { imageUrl: input.imageUrl } : {}),
         status: 'aberto',
         origin: 'external_saas',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -1221,20 +1258,23 @@ async function handleSupportCreate(req: VercelRequest, res: VercelResponse) {
 
 async function handleSupportReply(req: VercelRequest, res: VercelResponse) {
   try {
+    const parsed = publicSupportReplySchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Os dados da resposta são inválidos.' });
+    const input = parsed.data;
     await validateSupportAccess(req);
-    const { orgId, requestId, message } = req.body;
 
-    if (!requestId || !message) {
-      return res.status(400).json({ error: 'Parâmetros ausentes: requestId e message são obrigatórios.' });
+    const requestRef = db
+      .collection('organizations')
+      .doc(input.orgId)
+      .collection('supportRequests')
+      .doc(input.requestId);
+    const requestSnapshot = await requestRef.get();
+    if (!requestSnapshot.exists || requestSnapshot.data()?.clientId !== input.clientId) {
+      return res.status(404).json({ error: 'Chamado não encontrado para este cliente.' });
     }
 
-    await db
-      .collection('organizations')
-      .doc(String(orgId))
-      .collection('supportRequests')
-      .doc(String(requestId))
-      .update({
-        message,
+    await requestRef.update({
+        message: input.message,
         status: 'aberto',
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
