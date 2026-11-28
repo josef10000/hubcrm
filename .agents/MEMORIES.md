@@ -818,11 +818,11 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Metas**: a comemoração guarda o ID da meta que a iniciou. Desativar ou remover a meta encerra sua comemoração; dados antigos são normalizados na abertura para limpar celebrações vinculadas a metas inativas.
 - **Reuniões**: assentos de cadeira aparecem em torno da mesa para os participantes. Os sprites caminham até lugares distintos e adotam a pose sentada ao chegar, sem levar móveis junto.
 
-## 49. Salas de operação e monitoramento do Hub Office
+## 49. Operações, andares e pisos do Hub Office
 
 - **Data**: 28/11/2026.
-- **Salas por operação**: tipos “Operação de produto”, “Sala de nicho” e “Sala de blog/canal” disponíveis no editor de espaços. Ao criar ou renomear uma oferta/produto no CRM ou um ICP/nicho, uma fila local cria ou atualiza a sala correspondente no Office; um personagem distinto entra nela. Criar sala manualmente ou andar também gera personagens. Migração v5 preenche espaços antigos sem equipe. A configuração continua local por usuário.
-- **Simulação**: começa ativa por padrão após carregar o Office. Em intervalos mais longos, agentes alternam trabalho, pausa e revisão e caminham para outras salas do mesmo andar; posições em trânsito são temporárias e não alteram o posto salvo.
-- **Movimento**: percursos visuais maiores ao redor das mesas e transição entre espaços. Móveis continuam fixos enquanto sprites caminham.
-- **Monitoramento**: tela cheia tem três modos: foco em uma sala, grade de todas as salas do prédio com acesso por clique, e alternância automática de sala a cada 12 segundos. A simulação pode ser pausada ou retomada na barra de tela cheia.
-- **Limite atual**: sala de blog/canal é criada manualmente porque o Hub hoje cadastra artigos, não blogs/canais como entidades. O Office segue local e simulado, sem VPS, métricas ou agentes reais.
+- **Modelo v6**: uma operação é uma entidade própria, com nome, tipo (geral, produto, nicho ou blog/canal) e uma lista de andares. Ofertas/produtos e ICPs/nichos criados ou renomeados no CRM sincronizam como operações locais; cada nova operação inicia com um andar, áreas, mobília e personagem. Blog/canal ainda pode ser criado manualmente porque o Hub cadastra artigos, mas não o canal como entidade.
+- **Migração**: dados v5 e anteriores são mantidos. Áreas locais marcadas como produto/nicho são extraídas para operações próprias, com o personagem relacionado transferido para o novo andar. A operação geral preserva os andares e agentes antigos.
+- **Tela cheia**: seletor de operação e três modos: um andar, todos os andares daquela operação em grade simultânea ou alternância automática aleatória entre os andares a cada 12 segundos.
+- **Pisos**: cada andar persiste uma textura (carvalho, nogueira, pedra, carpete ou madeira verde) e um tom base editável. Andares novos alternam texturas; operações de produto/nicho também têm acabamentos iniciais distintos.
+- **Simulação**: inicia ativa, anima o time entre áreas e andares da mesma operação e não muda a posição salva do posto. Reuniões ficam limitadas à operação selecionada. Dados, personagens e simulação continuam locais; VPS e agentes reais não estão conectados.
