@@ -784,3 +784,10 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Experiência**: sala 2D com estações, sprites próprios, lista de agentes, criação/edição local, estados e feed simulados, ação de revisão demonstrativa e tela cheia. A configuração persiste no `localStorage` por usuário autenticado.
 - **Licença de assets**: móveis, pisos, carpetes e paredes vieram de Pixel Agents (`pixel-agents-hq/pixel-agents`, revisão `4dd14d6`), sob MIT. A licença original e a atribuição estão em `public/assets/agent-office/PIXEL_AGENTS_LICENSE.txt` e `ASSET_SOURCES.md`. Personagens e interface são novos para o Hub; nenhum sprite de Gather Town foi copiado.
 - **Integração futura**: botão “Levar contexto ao chat do Davinci” envia o agente/tarefa via `sessionStorage` e exibe contexto em `/chat`. Isso só prepara o contexto; VPS e executores reais ainda não estão conectados e a atividade permanece simulada.
+
+## 45. Refinamento do Escritório 2D
+
+- **Data**: 28/11/2026.
+- **Movimento**: a estação ficou fixa; Framer Motion anima apenas o wrapper do personagem em uma rota curta ao redor da mesa, sem deslocar móveis, botões ou rótulos. `useReducedMotion` desliga a caminhada para quem prefere menos animação.
+- **Sala**: substituída a textura de piso cinza por tábuas quentes em CSS; parede de pôr do sol, luz de janela, luminárias, tapetes, estante, quadro branco e plantas dão cor e movimento ambiental. Itens estáticos seguem sem colisão ou deslocamento.
+- **Pesquisa de assets**: confirmei o pack Pixel Office de 2dPig como CC0 e o pack de móveis de Antea com atribuição; não foi preciso adicionar esses arquivos, porque o acervo Pixel Agents/MIT existente já fornece móveis usados pela cena. O catálogo oficial de tilesheets do Gather está livre para download, mas essa página não esclarece os termos de redistribuição; nenhum asset Gather foi copiado.

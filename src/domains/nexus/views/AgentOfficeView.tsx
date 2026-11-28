@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Bot, Check, CircleHelp, Maximize2, Minimize2, MessageCircle, Pause, Pencil, Play, Plus, Save, Sparkles, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -64,15 +64,19 @@ function Sprite({ agent, working }: { agent: OfficeAgent; working: boolean }) {
 function OfficeRoom({ agents, selectedId, simulation, onSelect, reviewIds }: {
   agents: OfficeAgent[]; selectedId: string; simulation: boolean; onSelect: (agent: OfficeAgent) => void; reviewIds: Set<string>;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   return <div className="office-room" aria-label="Mapa 2D do escritório">
-    <div className="office-back-wall"><div className="office-window"><span /><span /><span /></div><div className="office-clock">HUB&nbsp; · &nbsp;OFFICE</div><div className="office-window office-window-small"><span /><span /></div></div>
+    <div className="office-back-wall"><div className="office-window"><span /><span /><span /></div><div className="office-wall-art"><img src={`${furniture}/LARGE_PAINTING/LARGE_PAINTING.png`} alt="" /></div><div className="office-clock">HUB&nbsp; · &nbsp;OFFICE</div><div className="office-window office-window-small"><span /><span /></div><span className="office-wall-lamp office-wall-lamp-left"/><span className="office-wall-lamp office-wall-lamp-right"/></div>
     <div className="office-floor" />
+    <div className="office-sunbeam office-sunbeam-left"/><div className="office-sunbeam office-sunbeam-right"/>
     <div className="office-rug office-rug-center" />
     <div className="office-rug office-rug-right" />
+    <div className="office-furniture office-bookshelf"><img src={`${furniture}/BOOKSHELF/BOOKSHELF.png`} alt="" /></div>
+    <div className="office-furniture office-whiteboard"><img src={`${furniture}/WHITEBOARD/WHITEBOARD.png`} alt="" /></div>
     <div className="office-furniture office-sofa"><img src={`${furniture}/SOFA/SOFA_FRONT.png`} alt="" /></div>
     <div className="office-furniture office-coffee"><img src={`${furniture}/COFFEE_TABLE/COFFEE_TABLE.png`} alt="" /></div>
-    <div className="office-plant office-plant-left"><i /><i /><i /></div>
-    <div className="office-plant office-plant-right"><i /><i /><i /></div>
+    <div className="office-plant office-plant-left"><img src={`${furniture}/LARGE_PLANT/LARGE_PLANT.png`} alt="" /></div>
+    <div className="office-plant office-plant-right"><img src={`${furniture}/LARGE_PLANT/LARGE_PLANT.png`} alt="" /></div>
     <div className="office-zone office-zone-ops"><span>01</span> Operações</div>
     <div className="office-zone office-zone-finance"><span>02</span> Financeiro</div>
     <div className="office-zone office-zone-content"><span>03</span> Conteúdo</div>
@@ -87,14 +91,19 @@ function OfficeRoom({ agents, selectedId, simulation, onSelect, reviewIds }: {
         { x: Math.min(base.x + 7, 86), y: Math.min(base.y + 7, 79) },
       ];
       const moving = simulation && agent.status === 'working';
-      return <motion.button key={agent.id} type="button" className={`office-agent office-agent-${agent.zone} ${agent.id === selectedId ? 'is-selected' : ''}`} style={{ left: `${spots[index % 4].x}%`, top: `${spots[index % 4].y}%`, '--agent-accent': agent.color } as CSSProperties}
-        animate={moving ? { x: [0, 42, 38, 0], y: [0, -8, 4, 0] } : { x: 0, y: 0 }} transition={moving ? { duration: 6 + index, repeat: Infinity, ease: 'easeInOut' } : { duration: .45 }}
+      const wander = [
+        { x: [0, 9, 18, 12, -3, 0], y: [0, -2, 1, 5, 2, 0] },
+        { x: [0, -8, -15, -7, 4, 0], y: [0, 3, 1, -4, -2, 0] },
+        { x: [0, 6, 14, 8, -5, 0], y: [0, 2, 5, -2, -4, 0] },
+        { x: [0, -7, -16, -9, 3, 0], y: [0, -3, -1, 4, 3, 0] },
+      ][index % 4];
+      return <button key={agent.id} type="button" className={`office-agent office-agent-${agent.zone} ${agent.id === selectedId ? 'is-selected' : ''}`} style={{ left: `${spots[index % 4].x}%`, top: `${spots[index % 4].y}%`, '--agent-accent': agent.color } as CSSProperties}
         onClick={() => onSelect(agent)} aria-label={`${agent.name}, ${agent.role}, ${statusLabel[agent.status]}`}>
         <span className="office-desk"><img src={`${furniture}/DESK/DESK_FRONT.png`} alt=""/><img className={moving ? 'office-computer-on' : ''} src={`${furniture}/PC/PC_FRONT_ON_1.png`} alt="" /></span>
-        <Sprite agent={agent} working={agent.status === 'working'} />
+        <motion.span className="office-walker" animate={moving && !prefersReducedMotion ? wander : { x: 0, y: 0 }} transition={moving && !prefersReducedMotion ? { duration: 8 + index, repeat: Infinity, ease: 'easeInOut' } : { duration: .6 }}><Sprite agent={agent} working={agent.status === 'working'} /></motion.span>
         <span className="office-agent-tag"><i style={{ background: statusColor[agent.status] }} />{agent.name}<small>{agent.role}</small></span>
         {reviewIds.has(agent.id) && <span className="office-review-dot">Revisar</span>}
-      </motion.button>;
+      </button>;
     })}
     <div className="office-pixel-note"><Sparkles size={13} /> um espaço de trabalho para o que vem a seguir</div>
   </div>;
