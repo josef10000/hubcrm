@@ -26,8 +26,9 @@ Integração com gateway de pagamentos.
 
 ## 🛍️ Checkout Público (`/api/public_checkout`)
 Endpoint aberto (com rate limit) para auto-cadastro de leads.
-- Requer `orgId` e `publicToken`.
-- Gera automaticamente o cliente no Asaas e Firestore.
+- Requer `orgId` e a oferta em `clientData.offerId`. Gera o cliente no Asaas e no Firestore.
+- Cartão: envie um `attemptId` UUID v4 estável para a mesma compra. Após erro inconclusivo, reenvie a tentativa com os mesmos dados da compra, sem os dados do cartão, para verificar o pagamento original. Uma recusa explícita (`CARD_REJECTED`) permite corrigir os dados e reenviar para a mesma cobrança.
+- Se a tentativa continuar em `CARD_REVIEW` sem confirmação, concilie no Asaas pela referência externa `hubcheckout-<attemptId>` antes de cobrar novamente. A API não cria outra cobrança quando a primeira resposta é inconclusiva. O registro de tentativa só é acessado pelo servidor e não armazena dados de cartão.
 
 ## 💰 Portal do Cliente (`/api/portal_finance`)
 Endpoint seguro para exibição de faturas sem necessidade de login Firebase.

@@ -18,42 +18,76 @@ vi.mock('../../src/services/emailService.js', () => ({
 
 // Mock do Asaas utils
 const mockAsaasRequest = vi.fn();
-vi.mock('../_utils/asaas.js', () => ({
+vi.mock('../_utils/asaas.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../_utils/asaas.js')>(),
   asaasRequest: (...args: any[]) => mockAsaasRequest(...args),
-  safeErrorResponse: (res: any, error: any, msg: string) =>
-    res.status(500).json({ error: msg }),
 }));
 
-// Mock do Firestore
+// In-memory document paths and atomic transaction commits. No network clients.
 const mockDocGet = vi.fn();
 const mockDocSet = vi.fn().mockResolvedValue(true);
 const mockDocUpdate = vi.fn().mockResolvedValue(true);
+const ledger = new Map<string, any>();
+let rejectNextOrderCommit = false;
 
-const mockDocRef = {
-  id: 'new-client-id',
-  set: mockDocSet,
-  update: mockDocUpdate,
-};
+type Ref = ReturnType<typeof docRef>;
+function docRef(path: string) {
+  return {
+    id: path.split('/').at(-1),
+    path,
+    collection: (name: string) => collectionRef(`${path}/${name}`),
+    get: () => path.includes('/offers/') ? mockDocGet() : snapshot(path),
+    set: (...args: any[]) => mockDocSet(...args),
+    update: async (fields: object) => {
+      await mockDocUpdate(fields);
+      ledger.set(path, { ...ledger.get(path), ...fields });
+    },
+  };
+}
+function collectionRef(path: string) {
+  return { doc: (id = 'new-client-id'): Ref => docRef(`${path}/${id}`) };
+}
+function snapshot(path: string) {
+  return { exists: ledger.has(path), data: () => ledger.get(path) };
+}
 
+let queue = Promise.resolve();
 vi.mock('../_utils/firebase.js', () => ({
   db: {
-    collection: vi.fn().mockReturnValue({
-      doc: vi.fn().mockReturnValue({
-        collection: vi.fn().mockReturnValue({
-          doc: vi.fn().mockImplementation((id?: string) => {
-            if (id) {
-              return { get: mockDocGet };
-            }
-            return mockDocRef;
-          }),
-        }),
-      }),
-    }),
+    collection: collectionRef,
+    runTransaction: async (run: (tx: any) => Promise<any>) => {
+      const previous = queue;
+      let unlock!: () => void;
+      queue = new Promise(resolve => { unlock = resolve; });
+      await previous;
+      try {
+        const writes = new Map<string, any>();
+        const result = await run({
+          get: (ref: Ref) => ref.get(),
+          create: (ref: Ref, value: object) => {
+            if (ledger.has(ref.path)) throw new Error('Already exists');
+            writes.set(ref.path, value);
+          },
+          update: (ref: Ref, value: object) => writes.set(ref.path, { ...ledger.get(ref.path), ...value }),
+          set: (ref: Ref, value: object, options: { merge?: boolean }) =>
+            writes.set(ref.path, options?.merge ? { ...ledger.get(ref.path), ...value } : value),
+        });
+        if (rejectNextOrderCommit && [...writes.keys()].some(path => path.includes('/orders/'))) {
+          rejectNextOrderCommit = false;
+          throw new Error('Simulated unavailable order commit');
+        }
+        writes.forEach((value, key) => ledger.set(key, value));
+        return result;
+      } finally {
+        unlock();
+      }
+    },
   },
 }));
 
 // ── Import do handler ────────────────────────────────────────
 import handler from '../public_checkout';
+import { AsaasApiError } from '../_utils/asaas.js';
 import { sendFaturaEmitidaEmail } from '../../src/services/emailService';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -110,7 +144,8 @@ const validBody = {
 describe('Public Checkout Handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.ASAAS_API_KEY = 'test-key';
+    ledger.clear();
+    rejectNextOrderCommit = false;
   });
 
   // ──────── Validação de Entrada ────────
@@ -156,7 +191,7 @@ describe('Public Checkout Handler', () => {
   // ──────── Validação de Oferta ────────
   describe('Validação de Oferta', () => {
     it('deve retornar 404 se a oferta não existir no Firestore', async () => {
-      mockDocGet.mockResolvedValue({ exists: false });
+      mockDocGet.mockResolvedValue({ exists: false, data: () => undefined });
       const req = createReq(validBody);
       const res = createRes();
       await handler(req, res);
@@ -370,4 +405,139 @@ describe('Public Checkout Handler', () => {
       );
     });
   });
+  describe('Retomada de cartão', () => {
+    const body = {
+      ...validBody,
+      paymentMethod: 'CREDIT_CARD',
+      attemptId: '80911131-7127-4dd3-bd17-9293d67b50b4',
+      attribution: { utmSource: 'teste' },
+      creditCard: { number: 'SIMULATED_CARD', ccv: 'TEST_ONLY' },
+    };
+    const { creditCard, ...statusBody } = body;
+    const orderPath = 'organizations/org-123/orders/pay_card';
+    let providerStatus: string;
+    let paidResponseLost: boolean;
+    let rejectFirstCard: boolean;
+    let creationResponseLost: boolean;
+
+    const submit = async (payload: any = body) => {
+      const res = createRes();
+      await handler(createReq(payload), res);
+      return res;
+    };
+    const creates = (path = '/payments') => mockAsaasRequest.mock.calls.filter(([url, method]) => method === 'POST' && url === path);
+    const captures = () => creates('/payments/pay_card/payWithCreditCard');
+
+    beforeEach(() => {
+      providerStatus = 'PENDING';
+      paidResponseLost = false;
+      rejectFirstCard = false;
+      creationResponseLost = false;
+      mockDocGet.mockResolvedValue({
+        exists: true,
+        data: () => ({ ...validOffer, type: 'SINGLE', id: 'offer-1' }),
+      });
+      mockAsaasRequest.mockImplementation(async (endpoint: string, method: string) => {
+        if (endpoint.startsWith('/customers?')) return { data: [{ id: 'cus_card' }] };
+        const payment = () => ({
+          id: 'pay_card', customer: 'cus_card', invoiceUrl: 'https://example.test/card', status: providerStatus,
+        });
+        if (endpoint === '/payments' && method === 'POST') {
+          if (creationResponseLost) throw new Error('Simulated lost creation response');
+          return payment();
+        }
+        if (endpoint === '/payments?externalReference=hubcheckout-' + body.attemptId) return { data: [payment()] };
+        if (endpoint === '/subscriptions' && method === 'POST') return { id: 'sub_card' };
+        if (endpoint === '/subscriptions/sub_card/payments') return { data: [payment()] };
+        if (endpoint === '/payments/pay_card') return payment();
+        if (endpoint === '/payments/pay_card/payWithCreditCard') {
+          if (rejectFirstCard) {
+            rejectFirstCard = false;
+            throw new AsaasApiError(400, 'Simulated decline');
+          }
+          providerStatus = 'CONFIRMED';
+          if (paidResponseLost) throw new Error('Simulated timeout');
+          return payment();
+        }
+        throw new Error('Unexpected test input: ' + endpoint);
+      });
+    });
+
+    it('confirma e registra o pagamento original mesmo se a gravação do pedido precisar ser retomada', async () => {
+      rejectNextOrderCommit = true;
+      const first = await submit();
+      expect(first.body.code).toBe('CARD_REVIEW');
+      expect(ledger.has(orderPath)).toBe(false);
+
+      // Recover from the original attempt with no card data in the request.
+      const retry = await submit({ ...statusBody, attribution: { utmSource: 'outra' } });
+      expect(retry.statusCode).toBe(200);
+      expect(retry.body).toMatchObject({ paymentId: 'pay_card', paymentStatus: 'CONFIRMED' });
+      expect(ledger.get(orderPath)).toMatchObject({
+        amount: 8397, status: 'paid', offerId: 'offer-1',
+        attribution: { utmSource: 'teste' }, fulfillmentStatus: 'needs_review',
+      });
+      expect((await submit(statusBody)).body).toEqual(retry.body);
+      expect(creates()).toHaveLength(1);
+      expect(captures()).toHaveLength(1);
+      expect(sendFaturaEmitidaEmail).toHaveBeenCalledTimes(1);
+      expect(JSON.stringify([...ledger.values()])).not.toMatch(/SIMULATED_CARD|TEST_ONLY/);
+    });
+
+    it('recupera a confirmação do provedor quando a resposta do cartão não chega', async () => {
+      paidResponseLost = true;
+      expect((await submit()).body.code).toBe('CARD_REVIEW');
+      expect((await submit(statusBody)).body.paymentId).toBe('pay_card');
+      expect(creates()).toHaveLength(1);
+      expect(captures()).toHaveLength(1);
+    });
+
+    it('uma resposta de criação inconclusiva não dispara outro pagamento', async () => {
+      creationResponseLost = true;
+      expect((await submit()).body.code).toBe('CARD_REVIEW');
+      expect((await submit(statusBody)).body.code).toBe('CARD_REVIEW');
+      expect(creates()).toHaveLength(1);
+      expect(captures()).toHaveLength(0);
+    });
+
+    it('duas requisições simultâneas não criam duas cobranças', async () => {
+      const responses = await Promise.all([submit(), submit()]);
+      expect(responses.some(response => response.statusCode === 200)).toBe(true);
+      expect((await submit(statusBody)).body.paymentId).toBe('pay_card');
+      expect(creates()).toHaveLength(1);
+      expect(captures()).toHaveLength(1);
+    });
+
+    it('verificar um identificador desconhecido não inicia uma cobrança', async () => {
+      expect((await submit(statusBody)).body.code).toBe('CARD_NOT_STARTED');
+      expect(mockAsaasRequest).not.toHaveBeenCalled();
+    });
+
+    it('em caso de recusa confirmada, só aceita nova submissão explícita na cobrança original', async () => {
+      rejectFirstCard = true;
+      expect((await submit()).body.code).toBe('CARD_REJECTED');
+      expect((await submit(statusBody)).body.code).toBe('CARD_REJECTED');
+      expect(captures()).toHaveLength(1);
+      expect((await submit()).body.paymentId).toBe('pay_card');
+      expect(creates()).toHaveLength(1);
+      expect(captures()).toHaveLength(2);
+    });
+
+    it('não reaproveita o resultado se a compra ou a identidade for alterada', async () => {
+      expect((await submit()).statusCode).toBe(200);
+      const changed = { ...statusBody, clientData: { ...body.clientData, email: 'outro@example.test' } };
+      expect((await submit(changed)).statusCode).toBe(409);
+      expect(creates()).toHaveLength(1);
+    });
+
+    it('retoma uma assinatura mensal sem criar outra', async () => {
+      mockDocGet.mockResolvedValue({ exists: true, data: () => validOffer });
+      rejectNextOrderCommit = true;
+      expect((await submit()).body.code).toBe('CARD_REVIEW');
+      expect((await submit(statusBody)).body.paymentId).toBe('pay_card');
+      expect(creates('/subscriptions')).toHaveLength(1);
+      expect(captures()).toHaveLength(1);
+    });
+  });
+
 });

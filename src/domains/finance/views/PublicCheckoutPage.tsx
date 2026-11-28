@@ -21,6 +21,9 @@ export default function PublicCheckoutPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
+  const cardAttempt = useRef<string | null>(null);
+  const [reviewingCard, setReviewingCard] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   
   // Forma de Pagamento Transparente
@@ -151,10 +154,31 @@ export default function PublicCheckoutPage() {
   }, [paymentId, paymentSuccess, effectiveOrgId]);
 
   const activeOffer = offers.find(o => o.id === clientData.offerId) || selectedOffer || offers[0];
+  const cardAttemptKey = effectiveOrgId && activeOffer?.id
+    ? `hubcheckout:card:${effectiveOrgId}:${activeOffer.id}` : null;
+
+  useEffect(() => {
+    if (!cardAttemptKey) return;
+    try {
+      const saved = window.sessionStorage.getItem(cardAttemptKey);
+      if (!saved) return;
+      const { id, bumpIds, billingCycle } = JSON.parse(saved);
+      if (typeof id !== 'string') return;
+      cardAttempt.current = id;
+      setReviewingCard(true);
+      setPaymentMethod('CREDIT_CARD');
+      if (Array.isArray(bumpIds)) setSelectedBumpIds(bumpIds.filter(id => typeof id === 'string'));
+      setClientData(previous => ({ ...previous, billingCycle: billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY' }));
+    } catch {
+      // Only an opaque attempt ID and cart selection are kept in browser storage.
+    }
+  }, [cardAttemptKey]);
+
   const logoToDisplay = activeOffer?.logoUrl || ownerSettings?.logoUrl || "https://i.imgur.com/zCvL7xy.png";
   const customAccentColor = activeOffer?.accentColor || '#f97316';
 
   const toggleBump = (bumpId: string) => {
+    if (reviewingCard || submitting) return;
     setSelectedBumpIds(prev => 
       prev.includes(bumpId) ? prev.filter(id => id !== bumpId) : [...prev, bumpId]
     );
@@ -193,22 +217,32 @@ export default function PublicCheckoutPage() {
 
   const handleProcessPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!effectiveOrgId || !activeOffer) return;
+    if (!effectiveOrgId || !activeOffer || submitLock.current) return;
 
     if (!clientData.name?.trim() || !clientData.email?.trim() || !clientData.whatsapp?.trim() || !clientData.cpfCnpj?.trim()) {
       toast.error('Por favor, preencha todos os dados pessoais obrigatórios.');
       return;
     }
 
-    if (paymentMethod === 'CREDIT_CARD') {
+    const isCard = paymentMethod === 'CREDIT_CARD';
+    if (isCard && !reviewingCard) {
       if (!cardData.number || !cardData.holderName || !cardData.expiryMonth || !cardData.expiryYear || !cardData.ccv) {
         toast.error('Preencha todos os dados do cartão de crédito.');
         return;
       }
     }
 
+    submitLock.current = true;
     setSubmitting(true);
     try {
+      if (isCard && !cardAttempt.current && cardAttemptKey) {
+        const id = window.crypto.randomUUID();
+        // Commit the key before sending so a refresh can recover the same purchase.
+        window.sessionStorage.setItem(cardAttemptKey, JSON.stringify({
+          id, bumpIds: selectedBumpIds, billingCycle: clientData.billingCycle,
+        }));
+        cardAttempt.current = id;
+      }
       const response = await fetch('/api/public_checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -236,7 +270,8 @@ export default function PublicCheckoutPage() {
           },
           selectedBumpIds,
           paymentMethod,
-          creditCard: paymentMethod === 'CREDIT_CARD' ? {
+          attemptId: isCard ? cardAttempt.current : undefined,
+          creditCard: isCard && !reviewingCard ? {
             holderName: cardData.holderName,
             number: cardData.number.replace(/\D/g, ''),
             expiryMonth: cardData.expiryMonth,
@@ -247,15 +282,22 @@ export default function PublicCheckoutPage() {
       });
 
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Erro ao processar pagamento');
+      if (!response.ok) {
+        if (isCard && ['CARD_REJECTED', 'CARD_NOT_STARTED'].includes(result.code)) {
+          setReviewingCard(false);
+          toast.error(result.error);
+          return;
+        }
+        throw new Error(result.error || 'Erro ao processar pagamento');
+      }
 
       if (result.paymentId) setPaymentId(result.paymentId);
 
       if (paymentMethod === 'PIX' && result.pixData) {
         setPixResult(result.pixData);
         toast.success('QR Code e Chave PIX gerados com sucesso!');
-      } else if (paymentMethod === 'CREDIT_CARD') {
-        if (result.paymentStatus === 'CONFIRMED' || result.paymentStatus === 'RECEIVED') {
+      } else if (isCard) {
+        if (['CONFIRMED', 'RECEIVED', 'PAID'].includes(result.paymentStatus)) {
           setPaymentSuccess(true);
           toast.success('Pagamento no cartão aprovado com sucesso!');
         } else {
@@ -269,9 +311,15 @@ export default function PublicCheckoutPage() {
       }
 
     } catch (error: any) {
-      console.error("Erro no pagamento:", error);
-      toast.error(error.message || 'Falha ao processar o pagamento.');
+      if (isCard && cardAttempt.current) {
+        setReviewingCard(true);
+        toast.error(error.message || 'Verifique a mesma tentativa antes de fazer outro pagamento.');
+      } else {
+        toast.error(isCard ? 'Não foi possível guardar a tentativa neste navegador. Nenhum pagamento foi enviado.'
+          : (error.message || 'Falha ao processar o pagamento.'));
+      }
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   };
@@ -610,6 +658,7 @@ export default function PublicCheckoutPage() {
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
+                      disabled={submitting || reviewingCard}
                       onClick={() => setPaymentMethod('PIX')}
                       className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all ${paymentMethod === 'PIX' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
@@ -620,6 +669,7 @@ export default function PublicCheckoutPage() {
 
                     <button
                       type="button"
+                      disabled={submitting || reviewingCard}
                       onClick={() => setPaymentMethod('CREDIT_CARD')}
                       className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all ${paymentMethod === 'CREDIT_CARD' ? 'bg-primary-500/20 border-primary-500 text-primary-400 shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
@@ -630,6 +680,7 @@ export default function PublicCheckoutPage() {
 
                     <button
                       type="button"
+                      disabled={submitting || reviewingCard}
                       onClick={() => setPaymentMethod('BOLETO')}
                       className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all ${paymentMethod === 'BOLETO' ? 'bg-blue-500/20 border-blue-500 text-blue-400 shadow-lg shadow-blue-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
@@ -682,7 +733,7 @@ export default function PublicCheckoutPage() {
                   )}
 
                   {/* FORMULÁRIO DE CARTÃO DE CRÉDITO COM CARTÃO 3D INTERATIVO */}
-                  {paymentMethod === 'CREDIT_CARD' && (
+                  {paymentMethod === 'CREDIT_CARD' && !reviewingCard && (
                     <div className="p-5 bg-black/40 border border-white/10 rounded-2xl space-y-4 animate-in fade-in duration-300">
                       
                       {/* CARTÃO VIRTUAL 3D INTERATIVO (Gira ao focar no CVV) */}
@@ -791,6 +842,12 @@ export default function PublicCheckoutPage() {
 
                 </div>
 
+                {reviewingCard && (
+                  <p role="status" className="rounded-xl border border-amber-500/30 p-3 text-sm text-amber-200">
+                    Verifique o pagamento com os mesmos dados da compra. Não pague de outra forma até confirmar o resultado.
+                  </p>
+                )}
+
                 {/* BOTÃO DE CONFIRMAÇÃO DO PAGAMENTO */}
                 <button
                   type="submit"
@@ -807,7 +864,7 @@ export default function PublicCheckoutPage() {
                     <>
                       <Lock size={18} />
                       <span>
-                        {paymentMethod === 'PIX' ? 'Gerar PIX Instantâneo' : paymentMethod === 'CREDIT_CARD' ? 'Pagar com Cartão de Crédito' : 'Gerar Boleto Bancário'}
+                        {reviewingCard ? 'Verificar pagamento' : paymentMethod === 'PIX' ? 'Gerar PIX Instantâneo' : paymentMethod === 'CREDIT_CARD' ? 'Pagar com Cartão de Crédito' : 'Gerar Boleto Bancário'}
                       </span>
                     </>
                   )}
