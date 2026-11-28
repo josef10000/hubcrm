@@ -776,3 +776,11 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Data**: 28/11/2026.
 - **Mouse**: a área central na borda inferior revela a Dock. Sair da barra e da bandeja fecha o menu e recolhe a Dock após 180 ms. Voltar para a área cancela o fechamento.
 - **Acessibilidade**: o clique não mantém a Dock aberta por foco. O foco visível de teclado mantém o acesso e a barra continua disponível em dispositivos sem hover.
+
+## 44. Hub Office — escritório visual de agentes
+
+- **Data**: 28/11/2026.
+- **Acesso**: item “Escritório de Agentes” em Central de Comando, rota autenticada `/workspace/office`, componente lazy em `src/domains/nexus/views/AgentOfficeView.tsx`.
+- **Experiência**: sala 2D com estações, sprites próprios, lista de agentes, criação/edição local, estados e feed simulados, ação de revisão demonstrativa e tela cheia. A configuração persiste no `localStorage` por usuário autenticado.
+- **Licença de assets**: móveis, pisos, carpetes e paredes vieram de Pixel Agents (`pixel-agents-hq/pixel-agents`, revisão `4dd14d6`), sob MIT. A licença original e a atribuição estão em `public/assets/agent-office/PIXEL_AGENTS_LICENSE.txt` e `ASSET_SOURCES.md`. Personagens e interface são novos para o Hub; nenhum sprite de Gather Town foi copiado.
+- **Integração futura**: botão “Levar contexto ao chat do Davinci” envia o agente/tarefa via `sessionStorage` e exibe contexto em `/chat`. Isso só prepara o contexto; VPS e executores reais ainda não estão conectados e a atividade permanece simulada.

@@ -36,6 +36,7 @@ const PersonalFinanceView = lazy(() => import('@finance/personal/PersonalFinance
 const BillingView = lazy(() => import('@finance/views/BillingView'));
 const AdministrativeView = lazy(() => import('@core/admin/views/AdministrativeView'));
 const MyWorkspaceView = lazy(() => import('@nexus/views/MyWorkspaceView'));
+const AgentOfficeView = lazy(() => import('@nexus/views/AgentOfficeView'));
 const ArenaView = lazy(() => import('@/domains/arena/views/ArenaView'));
 const HubShopView = lazy(() => import('@/domains/shop/views/HubShopView'));
 const ProjectsView = lazy(() => import('@crm/views/ProjectsView'));
@@ -176,6 +177,7 @@ export function AppRouter() {
                       <Route path="/profile/:uid" element={<ProfileView />} />
                       <Route path="/personal-finance" element={<PersonalFinanceView />} />
                       <Route path="/workspace" element={<MyWorkspaceView />} />
+                      <Route path="/workspace/office" element={<AgentOfficeView />} />
                       <Route path="/arena" element={<ArenaView />} />
                       <Route path="/shop" element={<HubShopView />} />
                       <Route path="/hub-ads" element={<HubAdsView />} />

@@ -35,6 +35,7 @@ export const navGroups = [
       { icon: LayoutDashboard, label: 'Visão Executiva (Hub Central)', path: '/' },
       { icon: Tv, label: 'Sala de Comando (3 Telas)', path: '/screens' },
       { icon: FolderKanban, label: 'Hub Office', path: '/workspace' },
+      { icon: Bot, label: 'Escritório de Agentes', path: '/workspace/office' },
       { icon: Calendar, label: 'Agenda & Prazos', path: '/calendar' }
     ]
   },
