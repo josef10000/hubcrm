@@ -71,8 +71,19 @@ export default function LiquidGlassDock() {
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [peekAutoHide, setPeekAutoHide] = useState(false);
+  const [dockHoverCapable, setDockHoverCapable] = useState(() => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+  const [dockRevealed, setDockRevealed] = useState(false);
+  const [dockHasFocus, setDockHasFocus] = useState(false);
 
   const dockContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const sync = () => setDockHoverCapable(media.matches);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
 
   // Auto-hide inteligente em editores imersivos (Funis, VSL, Canvas, Wiki)
   const isImmersiveEditor =
@@ -81,20 +92,20 @@ export default function LiquidGlassDock() {
     location.pathname === '/wiki';
 
   useEffect(() => {
-    if (!isImmersiveEditor) {
-      setPeekAutoHide(false);
-      return;
-    }
+    if (!dockHoverCapable) return;
     const onMouseMove = (e: MouseEvent) => {
-      if (window.innerHeight - e.clientY <= 58) {
-        setPeekAutoHide(true);
-      } else if (window.innerHeight - e.clientY > 250 && !activeGroupId && !profileMenuOpen) {
-        setPeekAutoHide(false);
+      const distanceFromBottom = window.innerHeight - e.clientY;
+      if (distanceFromBottom <= 88) {
+        setDockRevealed(true);
+        if (isImmersiveEditor) setPeekAutoHide(true);
+      } else if (distanceFromBottom > 132 && !activeGroupId && !profileMenuOpen && !dockHasFocus) {
+        setDockRevealed(false);
+        if (isImmersiveEditor) setPeekAutoHide(false);
       }
     };
     window.addEventListener('mousemove', onMouseMove);
     return () => window.removeEventListener('mousemove', onMouseMove);
-  }, [isImmersiveEditor, activeGroupId, profileMenuOpen]);
+  }, [dockHoverCapable, isImmersiveEditor, activeGroupId, profileMenuOpen, dockHasFocus]);
 
   // Fechar bandejas ao clicar fora ou apertar ESC
   useEffect(() => {
@@ -102,12 +113,14 @@ export default function LiquidGlassDock() {
       if (dockContainerRef.current && !dockContainerRef.current.contains(e.target as Node)) {
         setActiveGroupId(null);
         setProfileMenuOpen(false);
+        setDockRevealed(false);
       }
     };
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setActiveGroupId(null);
         setProfileMenuOpen(false);
+        setDockRevealed(false);
       }
     };
     document.addEventListener('mousedown', handleOutside);
@@ -206,6 +219,7 @@ export default function LiquidGlassDock() {
 
   const isHiddenByImmersive =
     isImmersiveEditor && !peekAutoHide && !activeGroupId && !profileMenuOpen;
+  const isDockHidden = isHiddenByImmersive || (dockHoverCapable && !dockRevealed && !activeGroupId && !profileMenuOpen && !dockHasFocus);
 
   // Estilo Liquid Glass adaptativo para temas escuros e claros (ex: Branco Elite)
   const glassSurfaceStyle: React.CSSProperties = palette.isLight
@@ -239,13 +253,18 @@ export default function LiquidGlassDock() {
   return (
     <>
       {/* Indicador sutil na base quando auto-oculto em editores de tela cheia */}
-      {isHiddenByImmersive && (
+      {isDockHidden && (
         <div
-          onMouseEnter={() => setPeekAutoHide(true)}
-          className="fixed bottom-0 inset-x-0 h-5 z-[65] flex items-end justify-center pb-1.5 cursor-pointer"
+          data-dock-reveal="true"
+          onMouseEnter={() => {
+            setDockRevealed(true);
+            if (isImmersiveEditor) setPeekAutoHide(true);
+          }}
+          className="fixed bottom-0 inset-x-0 h-6 z-[69] flex items-end justify-center pb-1.5 cursor-pointer"
+          aria-hidden="true"
         >
           <div
-            className="w-28 h-1 rounded-full backdrop-blur-md"
+            className="w-20 h-1 rounded-full backdrop-blur-md opacity-45 transition-opacity hover:opacity-90"
             style={{
               backgroundColor: `rgba(${palette.rgb}, 0.45)`,
               boxShadow: `0 0 12px rgba(${palette.rgb}, 0.5)`
@@ -256,13 +275,28 @@ export default function LiquidGlassDock() {
 
       <div
         ref={dockContainerRef}
-        onMouseLeave={() => {
+        onMouseEnter={() => {
+          setDockRevealed(true);
+        }}
+        onMouseLeave={event => {
           setHoveredIdx(null);
           setHoveredLabel(null);
+          if (dockHoverCapable && !activeGroupId && !profileMenuOpen && !dockHasFocus && window.innerHeight - event.clientY > 88) {
+            setDockRevealed(false);
+          }
+        }}
+        onFocusCapture={() => {
+          setDockHasFocus(true);
+          setDockRevealed(true);
+        }}
+        onBlurCapture={event => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setDockHasFocus(false);
+          }
         }}
         className={`fixed bottom-3.5 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center max-w-[calc(100vw-1.25rem)] transition-all duration-300 ${
-          isHiddenByImmersive
-            ? 'translate-y-24 opacity-0 pointer-events-none'
+          isDockHidden
+            ? 'translate-y-full opacity-0 pointer-events-none'
             : 'translate-y-0 opacity-100'
         }`}
       >

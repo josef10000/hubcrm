@@ -763,3 +763,10 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Fonte e cache**: cotações usam brapi.dev no backend, nunca no navegador. Cache compartilhado no Firestore por ticker por 30 minutos; atualização iniciada pelo usuário. Cotação gratuita pode ter atraso aproximado de 30 minutos.
 - **Proteção de consumo**: transação Firestore global em `marketQuoteUsage/{AAAA-MM}` reserva cada tentativa antes do upstream; teto rígido de 4.000 tentativas/mês UTC. Uma janela de até 31 dias que atravesse três meses UTC fica limitada a 12.000, abaixo das 15.000 da faixa gratuita divulgada; falhas também contam.
 - **Configuração**: variável secreta `BRAPI_API_KEY` precisa existir no ambiente de deploy para chamadas externas. Guia em `docs/modules/Financas_Pessoais_Investimentos.md`. Regras de `personalFinance/{uid}/assets` permitem campos de cotação opcionais e validados.
+
+## 42. Refinamentos de Carteira e Dock
+
+- **Data**: 28/11/2026.
+- **Cartões e contas**: cartão mantém `bankAccountId`; cadastro/edição exige escolher uma conta ativa quando houver, e pagamentos de fatura continuam usando essa conta como sugestão, com possibilidade de trocar. Sem conta ativa, cartão segue cadastrável sem vínculo.
+- **Visual da carteira**: cartões bancários e de crédito preservam frente/verso, bandeiras, logos e acabamentos, com área 3D e cartões de conteúdo mais compactos.
+- **Dock**: em dispositivos com mouse/ponteiro fino, dock recolhida e revelada quando o ponteiro chega à borda inferior; continua aberta com menu ativo e reaparece por foco de teclado. Touch continua sempre visível fora de editores imersivos.

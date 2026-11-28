@@ -24,8 +24,8 @@
 
 .personal-wallet-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: .85rem;
 }
 
 .personal-wallet-item,
@@ -39,7 +39,7 @@
 
 .personal-wallet-item {
   width: 100%;
-  max-width: 30rem;
+  max-width: 26rem;
 }
 
 .personal-wallet-empty {
@@ -133,8 +133,8 @@
 .personal-instrument {
   position: relative;
   aspect-ratio: 1.586;
-  min-height: 11rem;
-  max-height: 15rem;
+  min-height: 9.25rem;
+  max-height: 13rem;
   perspective: 900px;
   border-radius: 1rem;
   --instrument-base: color-mix(in srgb, var(--instrument-accent) 35%, #101524);
@@ -191,7 +191,7 @@
   justify-content: space-between;
   gap: .5rem;
   overflow: hidden;
-  padding: .95rem 1rem 2.45rem;
+  padding: .75rem .85rem 2rem;
   color: white;
   border: 1px solid rgb(255 255 255 / 22%);
   border-radius: 1rem;
@@ -262,7 +262,7 @@
 .personal-instrument-name {
   overflow: hidden;
   color: white;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 650;
   letter-spacing: -.025em;
   line-height: 1.2;

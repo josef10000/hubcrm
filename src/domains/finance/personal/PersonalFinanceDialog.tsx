@@ -197,7 +197,9 @@ function CardFields({ card, accounts }: { card?: CreditCard; accounts: BankAccou
           <input name="dueDay" type="number" min={1} max={31} className={control} required defaultValue={card?.dueDay} />
         </Field>
       </div>
-      <AccountField accounts={accounts} label="Conta para pagamento" defaultValue={card?.bankAccountId} optional />
+      <AccountField accounts={accounts} label="Conta para pagamento" defaultValue={card?.bankAccountId}
+        optional={!accounts.some(account => !account.archived)} />
+      <p className="-mt-2 text-xs text-text-muted">Essa conta será sugerida ao registrar o pagamento da fatura. Você poderá escolher outra conta naquele momento.</p>
       <Appearance color={card?.color || bankPresets.find(item => item.id === (card?.bankPreset || inferBankPreset(card?.bank || '')))?.color}
         style={card?.style || bankPresets.find(item => item.id === (card?.bankPreset || inferBankPreset(card?.bank || '')))?.style} />
       <details open={Boolean(card?.cashbackPercent || card?.pointsPerDollar || card?.rewardProgramName)}
