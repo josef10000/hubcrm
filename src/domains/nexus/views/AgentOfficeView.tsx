@@ -4,6 +4,7 @@ import { ArrowLeft, Bot, Check, CircleHelp, Layers, Maximize2, Minimize2, Messag
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { useTransactions } from '@/hooks/queries/useFinance';
 import { agentPose, HabblaudCharacter } from '../officeArt/HabblaudCharacter';
 import { consumeOfficeRoomSync, getOfficeRoomSyncEventName } from '../officeRoomSync';
 import './AgentOfficeView.css';
@@ -32,8 +33,10 @@ const operationKinds: { id: OfficeOperationKind; label: string }[] = [
 interface OfficeProp { id: string; kind: OfficePropKind; name: string; x: number; y: number; size: number }
 interface OfficeMilestone { id: string; name: string; metric: 'sales' | 'profit'; target: number; enabled: boolean }
 interface OfficeSeason { name: string; start: string; end: string; enabled: boolean }
-interface OfficeCelebration { title: string; until: number; milestoneId?: string }
-interface OfficeEventSettings { milestones: OfficeMilestone[]; season: OfficeSeason; celebration?: OfficeCelebration; seasonPreviewUntil?: number }
+type CelebrationTheme = 'spark' | 'gold' | 'confetti';
+type CelebrationDuration = 'midnight' | '2' | '6' | '12' | '24';
+interface OfficeCelebration { title: string; until: number; milestoneId?: string; theme?: CelebrationTheme }
+interface OfficeEventSettings { milestones: OfficeMilestone[]; season: OfficeSeason; celebration?: OfficeCelebration; seasonPreviewUntil?: number; celebrationTheme?: CelebrationTheme; celebrationDuration?: CelebrationDuration; triggeredMilestones?: Record<string, string>; simulatedCompleted?: number; completedDate?: string }
 interface OfficeMeeting { floorId: string; areaId: string; participants: string[]; previous: Array<Pick<OfficeAgent, 'id' | 'status' | 'update'>>; arrived: boolean }
 
 interface OfficeArea {
@@ -50,6 +53,7 @@ interface OfficeOperation { id: string; name: string; kind: OfficeOperationKind;
 interface OfficeFloor {
   id: string;
   name: string;
+  purpose?: string;
   operationId: string;
   floorStyle: OfficeFloorStyle;
   floorColor: string;
@@ -71,9 +75,10 @@ interface OfficeAgent {
   walking?: boolean;
 }
 
-const STORAGE_VERSION = 6;
-const PREVIOUS_STORAGE_VERSION = 5;
-const OLDER_STORAGE_VERSION = 4;
+const STORAGE_VERSION = 7;
+const PREVIOUS_STORAGE_VERSION = 6;
+const OLDER_STORAGE_VERSION = 5;
+const OLDER_SUPPORTED_STORAGE_VERSION = 4;
 const LEGACY_STORAGE_VERSION = 1;
 const MAIN_FLOOR_ID = 'floor-main';
 const MAIN_OPERATION_ID = 'operation-main';
@@ -99,7 +104,7 @@ function createDefaultFurnitureProps(floorId: string, areas: OfficeArea[]): Offi
   ];
 }
 const starterOperations: OfficeOperation[] = [{ id: MAIN_OPERATION_ID, name: 'Operação principal', kind: 'general' }];
-const starterFloors: OfficeFloor[] = [{ id: MAIN_FLOOR_ID, operationId: MAIN_OPERATION_ID, name: 'Andar principal', floorStyle: 'oak', floorColor: '#d9ae72', areas: starterAreas, props: createDefaultFurnitureProps(MAIN_FLOOR_ID, starterAreas) }];
+const starterFloors: OfficeFloor[] = [{ id: MAIN_FLOOR_ID, operationId: MAIN_OPERATION_ID, name: 'Andar principal', purpose: 'Operação geral', floorStyle: 'oak', floorColor: '#d9ae72', areas: starterAreas, props: createDefaultFurnitureProps(MAIN_FLOOR_ID, starterAreas) }];
 
 function createOperationFloor(operationId: string, operationName: string, floorName = 'Andar térreo', floorStyle: OfficeFloorStyle = 'sage'): OfficeFloor {
   const id = crypto.randomUUID();
@@ -110,14 +115,34 @@ function createOperationFloor(operationId: string, operationName: string, floorN
     { id: crypto.randomUUID(), name: 'Pausa', x: 72, y: 72, color: '#c38fbd', kind: 'lounge' },
   ];
   const colors: Record<OfficeFloorStyle, string> = { oak: '#d9ae72', walnut: '#76513e', stone: '#a6a6a0', carpet: '#8e8298', sage: '#95ad88' };
-  return { id, operationId, name: floorName, floorStyle, floorColor: colors[floorStyle], areas, props: createDefaultFurnitureProps(id, areas) };
+  return { id, operationId, name: floorName, purpose: 'Operação geral', floorStyle, floorColor: colors[floorStyle], areas, props: createDefaultFurnitureProps(id, areas) };
+}
+
+type OfficeFloorTemplate = 'operations' | 'content' | 'campaigns' | 'product' | 'meeting';
+const floorTemplates: { id: OfficeFloorTemplate; name: string; purpose: string; areas: Array<{ name: string; kind: OfficeRoomKind; color: string }> }[] = [
+  { id: 'operations', name: 'Operações', purpose: 'Operação geral', areas: [{ name: 'Equipe', kind: 'bay', color: '#67c9c0' }, { name: 'Planejamento', kind: 'presentation', color: '#82aee2' }, { name: 'Reunião', kind: 'meeting', color: '#d2a579' }, { name: 'Pausa', kind: 'lounge', color: '#c38fbd' }] },
+  { id: 'content', name: 'Conteúdo', purpose: 'Conteúdo', areas: [{ name: 'Redação', kind: 'bay', color: '#d48dc1' }, { name: 'Revisão', kind: 'presentation', color: '#82aee2' }, { name: 'Brainstorm', kind: 'meeting', color: '#d2a579' }, { name: 'Pausa', kind: 'lounge', color: '#c38fbd' }] },
+  { id: 'campaigns', name: 'Campanhas', purpose: 'Campanhas', areas: [{ name: 'Planejamento', kind: 'presentation', color: '#82aee2' }, { name: 'Criativos', kind: 'bay', color: '#d48dc1' }, { name: 'Revisão', kind: 'meeting', color: '#d2a579' }] },
+  { id: 'product', name: 'Produto', purpose: 'Produto', areas: [{ name: 'Desenvolvimento', kind: 'bay', color: '#67c9c0' }, { name: 'Testes', kind: 'presentation', color: '#82aee2' }, { name: 'Reunião', kind: 'meeting', color: '#d2a579' }] },
+  { id: 'meeting', name: 'Reuniões', purpose: 'Reuniões', areas: [{ name: 'Sala principal', kind: 'meeting', color: '#d2a579' }, { name: 'Apresentação', kind: 'presentation', color: '#82aee2' }, { name: 'Descanso', kind: 'lounge', color: '#c38fbd' }] },
+];
+
+function createTemplateFloor(operationId: string, index: number, templateId: OfficeFloorTemplate, style: OfficeFloorStyle): OfficeFloor {
+  const template = floorTemplates.find(item => item.id === templateId) ?? floorTemplates[0];
+  const colors: Record<OfficeFloorStyle, string> = { oak: '#d9ae72', walnut: '#76513e', stone: '#a6a6a0', carpet: '#8e8298', sage: '#95ad88' };
+  const id = crypto.randomUUID();
+  const areas: OfficeArea[] = template.areas.map((item, areaIndex) => ({ id: crypto.randomUUID(), name: item.name, kind: item.kind, color: item.color, x: [28, 72, 31, 72][areaIndex % 4], y: areaIndex < 2 ? 35 : 72 }));
+  return { id, operationId, name: `Andar ${index}`, purpose: template.purpose, floorStyle: style, floorColor: colors[style], areas, props: createDefaultFurnitureProps(id, areas) };
 }
 const defaultEventSettings: OfficeEventSettings = {
   milestones: [
     { id: 'sales-50', name: '50 vendas no dia', metric: 'sales', target: 50, enabled: true },
-    { id: 'profit-1000', name: 'R$ 1.000 de lucro no dia', metric: 'profit', target: 1000, enabled: true },
+    { id: 'profit-1000', name: 'R$ 1.000 de resultado financeiro hoje', metric: 'profit', target: 1000, enabled: true },
   ],
   season: { name: 'Natal', start: '12-20', end: '12-26', enabled: true },
+  celebrationTheme: 'spark',
+  celebrationDuration: 'midnight',
+  triggeredMilestones: {},
 };
 
 function normalizeOfficeEvents(settings?: OfficeEventSettings): OfficeEventSettings {
@@ -126,7 +151,7 @@ function normalizeOfficeEvents(settings?: OfficeEventSettings): OfficeEventSetti
     ? settings.milestones.find(item => item.id === settings.celebration?.milestoneId)
     : settings.milestones.find(item => item.name === settings.celebration?.title);
   const celebration = settings.celebration && activeMilestone?.enabled ? settings.celebration : undefined;
-  return { ...settings, celebration, seasonPreviewUntil: settings.season.enabled ? settings.seasonPreviewUntil : undefined };
+  return { ...defaultEventSettings, ...settings, celebration: celebration ? { ...celebration, theme: celebration.theme ?? settings.celebrationTheme ?? 'spark' } : undefined, seasonPreviewUntil: settings.season.enabled ? settings.seasonPreviewUntil : undefined, triggeredMilestones: settings.triggeredMilestones ?? {} };
 }
 
 const starterAgents: OfficeAgent[] = [
@@ -157,7 +182,7 @@ function ensureOperationAgents(operationList: OfficeOperation[], floors: OfficeF
 }
 
 function migrateLegacyOperations(rawFloors: OfficeFloor[], rawAgents: OfficeAgent[]) {
-  const floors = rawFloors.map(floor => ({ ...floor, operationId: MAIN_OPERATION_ID, floorStyle: floor.floorStyle ?? 'oak', floorColor: floor.floorColor ?? '#d9ae72', areas: [...floor.areas] }));
+  const floors = rawFloors.map(floor => ({ ...floor, operationId: MAIN_OPERATION_ID, purpose: floor.purpose ?? 'Operação geral', floorStyle: floor.floorStyle ?? 'oak', floorColor: floor.floorColor ?? '#d9ae72', areas: [...floor.areas] }));
   const agents: OfficeAgent[] = rawAgents.map(agent => ({ ...agent, status: 'idle' as AgentStatus, walking: false, update: 'Disponível para receber uma tarefa' }));
   const operations = [...starterOperations];
   const generatedFloors: OfficeFloor[] = [];
@@ -188,6 +213,14 @@ function migrateLegacyOperations(rawFloors: OfficeFloor[], rawAgents: OfficeAgen
 
 const statusLabel: Record<AgentStatus, string> = { idle: 'Disponível', working: 'Trabalhando', review: 'Precisa da sua revisão' };
 const statusColor: Record<AgentStatus, string> = { idle: '#9ca3af', working: '#63c5da', review: '#f2bd64' };
+interface OfficeMetrics { sales: number; income: number; generatedIncome: number; pendingSales: number; expenses: number; result: number; completed: number; reviews: number }
+const currency = (value: number) => `R$ ${value.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+const localDateKey = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+const activityStamp = (date = new Date()) => date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+function celebrationEnds(duration: CelebrationDuration | undefined, now = new Date()) {
+  if (!duration || duration === 'midnight') return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+  return now.getTime() + Number(duration) * 60 * 60 * 1000;
+}
 const propCatalog: { kind: OfficePropKind; name: string; src?: string }[] = [
   { kind: 'desk', name: 'Mesa de trabalho', src: `${furniture}/DESK/DESK_FRONT.png` },
   { kind: 'meeting-table', name: 'Mesa de reunião', src: `${furniture}/TABLE_FRONT/TABLE_FRONT.png` },
@@ -205,8 +238,8 @@ function Sprite({ agent, working, poseOverride }: { agent: OfficeAgent; working:
   return <HabblaudCharacter seed={agent.look} outfit={agent.color} pose={pose} className={working ? 'office-sprite-working' : ''} />;
 }
 
-function OfficeRoom({ agents, areas, props = [], floorId, floorStyle, floorColor, meeting, selectedId, simulation, fullscreen, editingLayout, onMoveProp, onSelect, onExitFullscreen, reviewIds, celebration, season }: {
-  agents: OfficeAgent[]; areas: OfficeArea[]; props?: OfficeProp[]; floorId: string; floorStyle: OfficeFloorStyle; floorColor: string; meeting?: OfficeMeeting | null; selectedId: string; simulation: boolean; fullscreen: boolean; editingLayout: boolean; onMoveProp: (propId: string, x: number, y: number) => void; onSelect: (agent: OfficeAgent) => void; onExitFullscreen: () => void; reviewIds: Set<string>; celebration?: OfficeCelebration; season?: string;
+function OfficeRoom({ agents, areas, props = [], floorId, floorStyle, floorColor, meeting, selectedId, simulation, fullscreen, editingLayout, onMoveProp, onSelect, onExitFullscreen, reviewIds, celebration, season, metrics }: {
+  agents: OfficeAgent[]; areas: OfficeArea[]; props?: OfficeProp[]; floorId: string; floorStyle: OfficeFloorStyle; floorColor: string; meeting?: OfficeMeeting | null; selectedId: string; simulation: boolean; fullscreen: boolean; editingLayout: boolean; onMoveProp: (propId: string, x: number, y: number) => void; onSelect: (agent: OfficeAgent) => void; onExitFullscreen: () => void; reviewIds: Set<string>; celebration?: OfficeCelebration; season?: string; metrics: OfficeMetrics;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const roomRef = useRef<HTMLDivElement>(null);
@@ -241,11 +274,11 @@ function OfficeRoom({ agents, areas, props = [], floorId, floorStyle, floorColor
     return { x: Math.max(14, Math.min(86, area.x + Math.cos(angle) * radiusX)), y: Math.max(24, Math.min(80, area.y + Math.sin(angle) * radiusY)), angle: angle * 180 / Math.PI + 90 };
   };
   const sceneProps = meeting?.floorId === floorId ? props.filter(prop => prop.kind !== 'sofa' && prop.kind !== 'coffee-table') : props;
-  return <div ref={roomRef} className={`office-room floor-${floorStyle} ${editingLayout ? 'is-layout-editing' : ''} ${meeting?.floorId === floorId ? 'is-office-meeting' : ''} ${celebration ? 'has-celebration' : ''} ${season ? 'has-season-theme' : ''} ${seasonalClass}`} style={{ '--floor-tint': floorColor } as CSSProperties} aria-label="Mapa 2D do escritório">
-    {(celebration || season) && <div className={`office-event-banner ${celebration ? 'is-milestone' : 'is-season'}`}><PartyPopper size={15}/><span><strong>{celebration?.title ?? season}</strong><small>{celebration ? 'Celebração ativa até meia-noite' : 'Tema especial do escritório'}</small></span></div>}
+  return <div ref={roomRef} className={`office-room floor-${floorStyle} ${editingLayout ? 'is-layout-editing' : ''} ${meeting?.floorId === floorId ? 'is-office-meeting' : ''} ${celebration ? `has-celebration celebration-${celebration.theme ?? 'spark'}` : ''} ${season ? 'has-season-theme' : ''} ${seasonalClass}`} style={{ '--floor-tint': floorColor } as CSSProperties} aria-label="Mapa 2D do escritório">
+    {(celebration || season) && <div className={`office-event-banner ${celebration ? 'is-milestone' : 'is-season'}`}><PartyPopper size={15}/><span><strong>{celebration?.title ?? season}</strong><small>{celebration ? `Comemoração até ${new Date(celebration.until).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : 'Tema especial do escritório'}</small></span></div>}
     {editingLayout && <div className="office-layout-hint"><Move size={14}/> Arraste os móveis para reposicioná-los. Solte para salvar.</div>}
     {meeting?.floorId === floorId && <div className="office-meeting-banner"><Users size={14}/><span>Reunião simulada com {meeting.participants.length} agentes</span></div>}
-    <div className="office-back-wall"><div className="office-window"><span /><span /><span /></div><div className="office-wall-art"><img src={`${furniture}/LARGE_PAINTING/LARGE_PAINTING.png`} alt="" /></div><div className="office-clock">HUB&nbsp; · &nbsp;OFFICE</div><div className="office-window office-window-small"><span /><span /></div><span className="office-wall-lamp office-wall-lamp-left"/><span className="office-wall-lamp office-wall-lamp-right"/></div>
+    <div className="office-back-wall"><div className="office-window"><span /><span /><span /></div><div className="office-wall-art"><img src={`${furniture}/LARGE_PAINTING/LARGE_PAINTING.png`} alt="" /></div><div className="office-tv-monitor" aria-label="Resumo diário da operação com dados financeiros reais"><div className="office-tv-top"><span>HUB · PAINEL DO DIA</span><i/></div><div className="office-tv-metrics"><span><small>VENDAS PAGAS</small><strong>{metrics.sales}</strong></span><span><small>FATURAMENTO</small><strong>{currency(metrics.income)}</strong></span><span><small>PENDENTES</small><strong>{metrics.pendingSales}</strong></span><span><small>ETAPAS*</small><strong>{metrics.completed}</strong></span><span><small>REVISÕES*</small><strong>{metrics.reviews}</strong></span></div><div className="office-tv-foot">Financeiro real · *atividade dos personagens simulada</div></div><div className="office-clock">HUB&nbsp; · &nbsp;OFFICE</div><div className="office-window office-window-small"><span /><span /></div><span className="office-wall-lamp office-wall-lamp-left"/><span className="office-wall-lamp office-wall-lamp-right"/></div>
     {seasonalClass === 'theme-christmas' && <div className="office-christmas-garland" aria-hidden="true">{Array.from({ length: 13 }, (_, index) => <i key={index} style={{ left: `${index * 8.1}%`, top: `${index % 2 ? 10 : 0}px`, animationDelay: `${index * -.19}s` }}/>)}</div>}
     {seasonalClass === 'theme-junina' && <div className="office-junina-bunting" aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <i key={index} style={{ left: `${index * 11}%` }}/>)}</div>}
     <div className="office-floor" />
@@ -283,7 +316,7 @@ function OfficeRoom({ agents, areas, props = [], floorId, floorStyle, floorColor
       return <motion.button key={agent.id} type="button" className={`office-agent ${agent.id === selectedId ? 'is-selected' : ''}`} style={{ left: `calc(${base.x}% + ${spots.x}px)`, top: `calc(${base.y}% + ${spots.y}px)`, '--agent-accent': agent.color } as CSSProperties} animate={atMeeting ? { left: `${target.x}%`, top: `${target.y}%` } : { left: `calc(${base.x}% + ${spots.x}px)`, top: `calc(${base.y}% + ${spots.y}px)` }} transition={{ duration: atMeeting ? 2.2 : agent.walking ? 5.2 : .5, ease: 'easeInOut' }}
         onClick={() => onSelect(agent)} aria-label={`${agent.name}, ${agent.role}, ${statusLabel[agent.status]}`}>
         <motion.span className="office-walker" animate={moving && !prefersReducedMotion && !walkingToMeeting ? wander : { x: 0, y: 0 }} transition={moving && !prefersReducedMotion && !walkingToMeeting ? { duration: 8 + index, repeat: Infinity, ease: 'easeInOut' } : { duration: .6 }}><Sprite agent={agent} working={agent.status === 'working' && !atMeeting} poseOverride={walkingToMeeting || agent.walking ? 'walk' : atMeeting && meeting?.arrived ? 'sit' : undefined} /></motion.span>
-        <span className="office-agent-tag"><i style={{ background: statusColor[agent.status] }} />{agent.name}<small>{agent.role}</small></span>
+        <span className="office-agent-tag" title={`${agent.task} · ${agent.update}`}><i style={{ background: statusColor[agent.status] }} />{agent.name}<small>{agent.role}</small>{agent.status !== 'idle' && <em>{agent.status === 'working' ? 'Em tarefa' : 'Revisão'}</em>}</span>
         {reviewIds.has(agent.id) && <span className="office-review-dot">Revisar</span>}
       </motion.button>;
     })}
@@ -292,16 +325,16 @@ function OfficeRoom({ agents, areas, props = [], floorId, floorStyle, floorColor
   </div>;
 }
 
-function FullscreenFloorBoard({ floors, agents, activeFloorId, simulation, meeting, selectedId, reviewIds, celebration, season, onSelectFloor, onSelectAgent }: {
-  floors: OfficeFloor[]; agents: OfficeAgent[]; activeFloorId: string; simulation: boolean; meeting?: OfficeMeeting | null; selectedId: string; reviewIds: Set<string>; celebration?: OfficeCelebration; season?: string; onSelectFloor: (id: string) => void; onSelectAgent: (agent: OfficeAgent) => void;
+function FullscreenFloorBoard({ floors, agents, activeFloorId, simulation, meeting, selectedId, reviewIds, celebration, season, metrics, onSelectFloor, onSelectAgent }: {
+  floors: OfficeFloor[]; agents: OfficeAgent[]; activeFloorId: string; simulation: boolean; meeting?: OfficeMeeting | null; selectedId: string; reviewIds: Set<string>; celebration?: OfficeCelebration; season?: string; metrics: OfficeMetrics; onSelectFloor: (id: string) => void; onSelectAgent: (agent: OfficeAgent) => void;
 }) {
   return <section className="office-floor-board" aria-label="Todos os andares desta operação">
     <header><div><span className="office-kicker">VISÃO DA OPERAÇÃO</span><h2>Todos os andares</h2></div><span>{floors.length} {floors.length === 1 ? 'andar' : 'andares'} · {agents.length} personagens</span></header>
     <div className="office-floor-board-grid">{floors.map((floor, index) => {
       const floorAgents = agents.filter(agent => agent.floorId === floor.id);
       return <article key={floor.id} className={`office-floor-tile ${activeFloorId === floor.id ? 'is-active' : ''}`}>
-        <button type="button" className="office-floor-tile-heading" onClick={() => onSelectFloor(floor.id)}><span><i>{String(index + 1).padStart(2, '0')}</i><strong>{floor.name}</strong></span><small>{floorAgents.length} {floorAgents.length === 1 ? 'pessoa' : 'pessoas'} · {floor.areas.length} áreas</small></button>
-        <div className="office-floor-preview"><OfficeRoom agents={floorAgents} areas={floor.areas} props={floor.props ?? []} floorId={floor.id} floorStyle={floor.floorStyle} floorColor={floor.floorColor} meeting={meeting} selectedId={selectedId} simulation={simulation} fullscreen={false} editingLayout={false} onMoveProp={() => undefined} onSelect={onSelectAgent} onExitFullscreen={() => undefined} reviewIds={reviewIds} celebration={celebration} season={season}/></div>
+        <button type="button" className="office-floor-tile-heading" onClick={() => onSelectFloor(floor.id)}><span><i>{String(index + 1).padStart(2, '0')}</i><strong>{floor.name}<small>{floor.purpose ?? 'Operação geral'}</small></strong></span><small>{floorAgents.filter(agent => agent.status === 'working').length} trabalhando · {floorAgents.filter(agent => agent.status === 'review').length} revisões</small></button>
+        <div className="office-floor-preview"><OfficeRoom agents={floorAgents} areas={floor.areas} props={floor.props ?? []} floorId={floor.id} floorStyle={floor.floorStyle} floorColor={floor.floorColor} meeting={meeting} selectedId={selectedId} simulation={simulation} fullscreen={false} editingLayout={false} onMoveProp={() => undefined} onSelect={onSelectAgent} onExitFullscreen={() => undefined} reviewIds={reviewIds} celebration={celebration} season={season} metrics={metrics}/></div>
       </article>;
     })}</div>
   </section>;
@@ -344,7 +377,7 @@ function SpaceEditor({ operations, activeOperationId, floors, selectedFloorId, o
   onRenameOperation: (id: string, name: string) => void;
   onDeleteOperation: (id: string) => void;
   onSelectFloor: (id: string) => void;
-  onAddFloor: () => void;
+  onAddFloor: (template: OfficeFloorTemplate) => void;
   onRenameFloor: (id: string, name: string) => void;
   onDeleteFloor: (id: string) => void;
   onUpdateFloor: (id: string, values: Partial<OfficeFloor>) => void;
@@ -363,6 +396,7 @@ function SpaceEditor({ operations, activeOperationId, floors, selectedFloorId, o
   const [newRoomKind, setNewRoomKind] = useState<OfficeRoomKind>('bay');
   const [operationName, setOperationName] = useState('');
   const [operationKind, setOperationKind] = useState<OfficeOperationKind>('blog');
+  const [floorTemplate, setFloorTemplate] = useState<OfficeFloorTemplate>('operations');
   function addArea(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!floor || !areaName.trim()) return;
@@ -374,10 +408,10 @@ function SpaceEditor({ operations, activeOperationId, floors, selectedFloorId, o
       <div className="office-editor-heading"><div><span className="office-kicker">PERSONALIZE SUAS OPERAÇÕES</span><h2 id="office-space-title">Operações e andares</h2></div><button type="button" onClick={onClose} aria-label="Fechar"><X size={19}/></button></div>
       <div className="office-operation-tabs">{operations.map(item => <button type="button" key={item.id} className={item.id === operation?.id ? 'is-active' : ''} onClick={() => onSelectOperation(item.id)}><Layers size={14}/>{item.name}<small>{operationKinds.find(kind => kind.id === item.kind)?.label}</small></button>)}</div>
       <form className="office-add-operation-form" onSubmit={event => { event.preventDefault(); if (!operationName.trim()) return; onAddOperation(operationName.trim(), operationKind); setOperationName(''); }}><input value={operationName} onChange={event => setOperationName(event.target.value)} maxLength={36} placeholder="Nome da nova operação" required/><select value={operationKind} onChange={event => setOperationKind(event.target.value as OfficeOperationKind)} aria-label="Tipo de operação">{operationKinds.map(kind => <option key={kind.id} value={kind.id}>{kind.label}</option>)}</select><button type="submit" className="office-secondary"><Plus size={14}/> Nova operação</button></form>
-      <div className="office-floor-tabs">{operationFloors.map(item => <button type="button" key={item.id} className={item.id === floor?.id ? 'is-active' : ''} onClick={() => onSelectFloor(item.id)}><Layers size={14}/>{item.name}</button>)}<button type="button" className="office-add-floor" onClick={onAddFloor}><Plus size={15}/> Novo andar</button></div>
+      <div className="office-floor-tabs">{operationFloors.map(item => <button type="button" key={item.id} className={item.id === floor?.id ? 'is-active' : ''} onClick={() => onSelectFloor(item.id)}><Layers size={14}/>{item.name}</button>)}<label className="office-template-select">Modelo<select value={floorTemplate} onChange={event => setFloorTemplate(event.target.value as OfficeFloorTemplate)}>{floorTemplates.map(template => <option key={template.id} value={template.id}>{template.name}</option>)}</select></label><button type="button" className="office-add-floor" onClick={() => onAddFloor(floorTemplate)}><Plus size={15}/> Novo andar</button></div>
       {floor && <div className="office-space-content">
         <div className="office-operation-name-row"><label className="office-space-name">Nome da operação<input value={operation?.name ?? ''} onChange={event => operation && onRenameOperation(operation.id, event.target.value)} maxLength={36} /></label><button type="button" className="office-delete-space" disabled={operations.length <= 1} onClick={() => operation && onDeleteOperation(operation.id)}><Trash2 size={14}/> Excluir operação</button></div>
-        <label className="office-space-name">Nome do andar<input value={floor.name} onChange={event => onRenameFloor(floor.id, event.target.value)} maxLength={40} /></label>
+        <div className="office-floor-identity"><label className="office-space-name">Nome do andar<input value={floor.name} onChange={event => onRenameFloor(floor.id, event.target.value)} maxLength={40} /></label><label className="office-space-name">Função deste andar<input value={floor.purpose ?? ''} onChange={event => onUpdateFloor(floor.id, { purpose: event.target.value })} maxLength={40} placeholder="Ex.: Conteúdo, Campanhas, Suporte" /></label></div>
         <div className="office-floor-style-row"><label>Textura do piso<select value={floor.floorStyle} onChange={event => onUpdateFloor(floor.id, { floorStyle: event.target.value as OfficeFloorStyle })}><option value="oak">Carvalho claro</option><option value="walnut">Madeira escura</option><option value="stone">Pedra</option><option value="carpet">Carpete</option><option value="sage">Madeira verde</option></select></label><label>Tom base<input type="color" value={floor.floorColor} onChange={event => onUpdateFloor(floor.id, { floorColor: event.target.value })}/></label></div>
         <div className="office-space-list-heading"><div><h3>Áreas deste andar</h3><p>Esta operação pode ter vários andares; cada andar tem suas próprias áreas e móveis.</p></div><button type="button" className="office-delete-space" disabled={operationFloors.length <= 1} onClick={() => onDeleteFloor(floor.id)}><Trash2 size={14}/> Excluir andar</button></div>
         <div className="office-area-editor-list">{floor.areas.map((area, index) => <div className="office-area-editor-row" key={area.id}>
@@ -399,16 +433,18 @@ function SpaceEditor({ operations, activeOperationId, floors, selectedFloorId, o
   </div>;
 }
 
-function EventSettingsEditor({ settings, onUpdate, onPreview, onPreviewSeason, onClose }: { settings: OfficeEventSettings; onUpdate: (settings: OfficeEventSettings) => void; onPreview: (milestone: OfficeMilestone) => void; onPreviewSeason: () => void; onClose: () => void }) {
+function EventSettingsEditor({ settings, metrics, onUpdate, onPreview, onPreviewSeason, onClose }: { settings: OfficeEventSettings; metrics: OfficeMetrics; onUpdate: (settings: OfficeEventSettings) => void; onPreview: (milestone: OfficeMilestone) => void; onPreviewSeason: () => void; onClose: () => void }) {
   const setMilestone = (id: string, values: Partial<OfficeMilestone>) => onUpdate({ ...settings, milestones: settings.milestones.map(item => item.id === id ? { ...item, ...values } : item) });
   const addMilestone = () => onUpdate({ ...settings, milestones: [...settings.milestones, { id: crypto.randomUUID(), name: 'Nova meta', metric: 'sales', target: 100, enabled: true }] });
   const removeMilestone = (id: string) => onUpdate({ ...settings, milestones: settings.milestones.filter(item => item.id !== id) });
   return <div className="office-modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section className="office-space-editor office-event-editor" role="dialog" aria-modal="true" aria-labelledby="office-event-title">
     <div className="office-editor-heading"><div><span className="office-kicker">METAS E CELEBRAÇÕES</span><h2 id="office-event-title">Deixe o escritório comemorar</h2></div><button type="button" onClick={onClose} aria-label="Fechar"><X size={19}/></button></div>
-    <p className="office-editor-note">As regras ficam neste navegador. Quando vendas e lucro estiverem conectados ao Hub, os mesmos eventos poderão ativar o tema automaticamente.</p>
-    <div className="office-event-section"><div className="office-space-list-heading"><div><h3>Metas da operação</h3><p>Uma meta alcançada ocupa o tema até meia-noite local.</p></div></div>
-      {settings.milestones.map(item => <div className="office-milestone-row" key={item.id}><input aria-label="Nome da meta" value={item.name} onChange={event => setMilestone(item.id, { name: event.target.value })}/><select aria-label="Indicador" value={item.metric} onChange={event => setMilestone(item.id, { metric: event.target.value as OfficeMilestone['metric'] })}><option value="sales">Vendas do dia</option><option value="profit">Lucro do dia</option></select><input aria-label="Meta" type="number" min="1" value={item.target} onChange={event => setMilestone(item.id, { target: Math.max(1, Number(event.target.value)) })}/><label className="office-switch"><input type="checkbox" checked={item.enabled} onChange={event => setMilestone(item.id, { enabled: event.target.checked })}/><span>Ativa</span></label><button type="button" className="office-secondary office-preview-celebration" onClick={() => onPreview(item)} disabled={!item.enabled}><PartyPopper size={14}/> Testar</button><button type="button" className="office-icon-button office-remove-area" onClick={() => removeMilestone(item.id)} aria-label={`Excluir meta ${item.name}`}><Trash2 size={14}/></button></div>)}
+    <p className="office-editor-note">Vendas, faturamento e pendências são atualizados a partir das transações reais do checkout/ADMS no Hub. Só a movimentação dos personagens, tarefas e etapas concluídas é simulada.</p>
+    <div className="office-event-section"><div className="office-space-list-heading"><div><h3>Indicadores reais de hoje</h3><p>Os monitores dos andares acompanham o feed financeiro do checkout/ADMS em tempo real.</p></div></div><div className="office-daily-metrics"><span>Vendas pagas<strong>{metrics.sales}</strong></span><span>Faturamento pago<strong>{currency(metrics.income)}</strong></span><span>Cobranças pendentes<strong>{metrics.pendingSales}</strong></span><span>Receita gerada<strong>{currency(metrics.generatedIncome)}</strong></span></div></div>
+    <div className="office-event-section"><div className="office-space-list-heading"><div><h3>Metas da operação</h3><p>Uma meta alcançada ativa a comemoração pela duração escolhida.</p></div></div>
+      {settings.milestones.map(item => <div className="office-milestone-row" key={item.id}><input aria-label="Nome da meta" value={item.name} onChange={event => setMilestone(item.id, { name: event.target.value })}/><select aria-label="Indicador" value={item.metric} onChange={event => setMilestone(item.id, { metric: event.target.value as OfficeMilestone['metric'] })}><option value="sales">Vendas pagas hoje</option><option value="profit">Resultado financeiro</option></select><input aria-label="Meta" type="number" min="1" value={item.target} onChange={event => setMilestone(item.id, { target: Math.max(1, Number(event.target.value)) })}/><label className="office-switch"><input type="checkbox" checked={item.enabled} onChange={event => setMilestone(item.id, { enabled: event.target.checked })}/><span>Ativa</span></label><button type="button" className="office-secondary office-preview-celebration" onClick={() => onPreview(item)} disabled={!item.enabled}><PartyPopper size={14}/> Testar</button><button type="button" className="office-icon-button office-remove-area" onClick={() => removeMilestone(item.id)} aria-label={`Excluir meta ${item.name}`}><Trash2 size={14}/></button></div>)}
       <button type="button" className="office-add-milestone" onClick={addMilestone}><Plus size={14}/> Nova meta</button>
+      <div className="office-celebration-options"><label>Visual<select value={settings.celebrationTheme ?? 'spark'} onChange={event => onUpdate({ ...settings, celebrationTheme: event.target.value as CelebrationTheme })}><option value="spark">Brilho festivo</option><option value="gold">Dourado</option><option value="confetti">Confetes</option></select></label><label>Duração<select value={settings.celebrationDuration ?? 'midnight'} onChange={event => onUpdate({ ...settings, celebrationDuration: event.target.value as CelebrationDuration })}><option value="midnight">Até meia-noite</option><option value="2">2 horas</option><option value="6">6 horas</option><option value="12">12 horas</option><option value="24">24 horas</option></select></label></div>
     </div>
     <div className="office-event-section"><div className="office-space-list-heading"><div><h3>Temas sazonais</h3><p>O tema da meta tem prioridade; depois o sazonal volta até a data final.</p></div></div>
       <div className="office-season-row"><label>Ocasião<input value={settings.season.name} maxLength={32} onChange={event => onUpdate({ ...settings, season: { ...settings.season, name: event.target.value } })} placeholder="Ex.: Festa Junina"/></label><label>Começa<input type="date" value={`2026-${settings.season.start}`} onChange={event => onUpdate({ ...settings, season: { ...settings.season, start: event.target.value.slice(5) } })}/></label><label>Termina<input type="date" value={`2026-${settings.season.end}`} onChange={event => onUpdate({ ...settings, season: { ...settings.season, end: event.target.value.slice(5) } })}/></label><label className="office-switch"><input type="checkbox" checked={settings.season.enabled} onChange={event => onUpdate({ ...settings, season: { ...settings.season, enabled: event.target.checked } })}/><span>Ativo</span></label></div>
@@ -420,6 +456,7 @@ function EventSettingsEditor({ settings, onUpdate, onPreview, onPreviewSeason, o
 export default function AgentOfficeView() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: transactions = [] } = useTransactions();
   const pageRef = useRef<HTMLDivElement>(null);
   const storageKey = `hub-agent-office:v${STORAGE_VERSION}:${user?.uid ?? 'local'}`;
   const [operations, setOperations] = useState<OfficeOperation[]>(starterOperations);
@@ -437,6 +474,9 @@ export default function AgentOfficeView() {
   const [simulation, setSimulation] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const [fullscreenMode, setFullscreenMode] = useState<OfficeViewMode>('floor');
+  const [rotationSeconds, setRotationSeconds] = useState(12);
+  const [rotationOrder, setRotationOrder] = useState<'random' | 'sequence'>('random');
+  const rotationIndex = useRef(0);
   const [focusedFloorId, setFocusedFloorId] = useState(MAIN_FLOOR_ID);
   const [simulationLocations, setSimulationLocations] = useState<Record<string, string>>({});
   const [simulationFloorLocations, setSimulationFloorLocations] = useState<Record<string, string>>({});
@@ -448,9 +488,28 @@ export default function AgentOfficeView() {
   const [calendarTick, setCalendarTick] = useState(0);
   const previousStorageKey = `hub-agent-office:v${PREVIOUS_STORAGE_VERSION}:${user?.uid ?? 'local'}`;
   const olderStorageKey = `hub-agent-office:v${OLDER_STORAGE_VERSION}:${user?.uid ?? 'local'}`;
+  const olderSupportedStorageKey = `hub-agent-office:v${OLDER_SUPPORTED_STORAGE_VERSION}:${user?.uid ?? 'local'}`;
   const oldestStorageKey = `hub-agent-office:v${LEGACY_STORAGE_VERSION}:${user?.uid ?? 'local'}`;
   const activeOperation = operations.find(operation => operation.id === activeOperationId) ?? operations[0];
   const operationFloors = useMemo(() => floors.filter(floor => floor.operationId === activeOperation?.id), [floors, activeOperation?.id]);
+  const todayKey = localDateKey();
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  const todayTransactions = transactions.filter(transaction => {
+    const rawTime = transaction.paymentDate || transaction.date;
+    const timestamp = typeof rawTime === 'number' ? rawTime : new Date(rawTime as string).getTime();
+    return timestamp >= todayStart.getTime() && timestamp < tomorrowStart.getTime() && String(transaction.status ?? '').toUpperCase() !== 'CANCELLED';
+  });
+  const metrics = useMemo<OfficeMetrics>(() => {
+    const incomeTransactions = todayTransactions.filter(transaction => String(transaction.type).toUpperCase() === 'INCOME');
+    const paidTransactions = incomeTransactions.filter(transaction => String(transaction.status).toUpperCase() === 'PAID');
+    const pendingTransactions = incomeTransactions.filter(transaction => String(transaction.status).toUpperCase() === 'PENDING');
+    const income = paidTransactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+    const generatedIncome = incomeTransactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+    const expenses = todayTransactions.filter(transaction => String(transaction.type).toUpperCase() === 'EXPENSE').reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+    const completed = eventSettings.completedDate === todayKey ? eventSettings.simulatedCompleted ?? 0 : 0;
+    return { sales: paidTransactions.length, income, generatedIncome, pendingSales: pendingTransactions.length, expenses, result: income - expenses, completed, reviews: reviewIds.size };
+  }, [todayTransactions, eventSettings.completedDate, eventSettings.simulatedCompleted, todayKey, reviewIds]);
 
   function migrateFloorFurniture(floor: OfficeFloor): OfficeFloor {
     const existing = Array.isArray(floor.props) ? [...floor.props] : [];
@@ -471,10 +530,10 @@ export default function AgentOfficeView() {
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
-        const data = JSON.parse(saved) as { operations?: OfficeOperation[]; activeOperationId?: string; agents?: OfficeAgent[]; floors?: OfficeFloor[]; activeFloorId?: string; eventSettings?: OfficeEventSettings };
+        const data = JSON.parse(saved) as { operations?: OfficeOperation[]; activeOperationId?: string; agents?: OfficeAgent[]; floors?: OfficeFloor[]; activeFloorId?: string; eventSettings?: OfficeEventSettings; activityLog?: string[] };
         if (Array.isArray(data.agents) && Array.isArray(data.floors) && data.floors.every(floor => typeof floor.id === 'string' && Array.isArray(floor.areas))) {
           if (Array.isArray(data.operations) && data.operations.length) {
-            const normalizedFloors = data.floors.map(floor => ({ ...floor, operationId: floor.operationId ?? MAIN_OPERATION_ID, floorStyle: floor.floorStyle ?? 'oak', floorColor: floor.floorColor ?? '#d9ae72', props: Array.isArray(floor.props) ? floor.props : [], areas: floor.areas.map(area => ({ ...area, kind: area.kind ?? 'bay' })) }));
+            const normalizedFloors = data.floors.map(floor => ({ ...floor, operationId: floor.operationId ?? MAIN_OPERATION_ID, purpose: floor.purpose ?? 'Operação geral', floorStyle: floor.floorStyle ?? 'oak', floorColor: floor.floorColor ?? '#d9ae72', props: Array.isArray(floor.props) ? floor.props : [], areas: floor.areas.map(area => ({ ...area, kind: area.kind ?? 'bay' })) }));
             setOperations(data.operations);
             setFloors(normalizedFloors);
             setAgents(ensureOperationAgents(data.operations, normalizedFloors, data.agents.map(agent => ({ ...agent, status: 'idle', walking: false, update: 'Disponível para receber uma tarefa' }))));
@@ -488,21 +547,32 @@ export default function AgentOfficeView() {
             setActiveFloorId(migrated.floors.find(floor => floor.id === data.activeFloorId && floor.operationId === MAIN_OPERATION_ID)?.id ?? migrated.floors.find(floor => floor.operationId === MAIN_OPERATION_ID)?.id ?? MAIN_FLOOR_ID);
           }
           if (data.eventSettings) setEventSettings(normalizeOfficeEvents(data.eventSettings));
+          if (Array.isArray(data.activityLog)) setEventLog(data.activityLog.slice(0, 40));
         } else {
           throw new Error('Formato local inválido');
         }
       } else {
         const previous = localStorage.getItem(previousStorageKey);
         const older = previous ? null : localStorage.getItem(olderStorageKey);
-        const priorData = previous ?? older;
+        const olderSupported = previous || older ? null : localStorage.getItem(olderSupportedStorageKey);
+        const priorData = previous ?? older ?? olderSupported;
         if (priorData) {
-          const data = JSON.parse(priorData) as { agents?: OfficeAgent[]; floors?: OfficeFloor[]; activeFloorId?: string; eventSettings?: OfficeEventSettings };
+          const data = JSON.parse(priorData) as { operations?: OfficeOperation[]; activeOperationId?: string; agents?: OfficeAgent[]; floors?: OfficeFloor[]; activeFloorId?: string; eventSettings?: OfficeEventSettings; activityLog?: string[] };
           if (Array.isArray(data.agents) && Array.isArray(data.floors)) {
-            const migrated = migrateLegacyOperations(data.floors.map(migrateFloorFurniture), data.agents);
-            setOperations(migrated.operations); setFloors(migrated.floors); setAgents(migrated.agents);
-            setActiveOperationId(MAIN_OPERATION_ID);
-            setActiveFloorId(migrated.floors.find(floor => floor.id === data.activeFloorId && floor.operationId === MAIN_OPERATION_ID)?.id ?? migrated.floors.find(floor => floor.operationId === MAIN_OPERATION_ID)?.id ?? MAIN_FLOOR_ID);
+            if (Array.isArray(data.operations) && data.operations.length) {
+              const normalizedFloors = data.floors.map(floor => ({ ...migrateFloorFurniture(floor), operationId: floor.operationId ?? MAIN_OPERATION_ID, purpose: floor.purpose ?? 'Operação geral' }));
+              setOperations(data.operations); setFloors(normalizedFloors); setAgents(ensureOperationAgents(data.operations, normalizedFloors, data.agents.map(agent => ({ ...agent, status: 'idle', walking: false }))));
+              const restoredFloor = normalizedFloors.find(floor => floor.id === data.activeFloorId) ?? normalizedFloors[0];
+              setActiveOperationId(data.operations.some(item => item.id === data.activeOperationId) ? data.activeOperationId! : restoredFloor?.operationId ?? MAIN_OPERATION_ID);
+              setActiveFloorId(restoredFloor?.id ?? MAIN_FLOOR_ID);
+            } else {
+              const migrated = migrateLegacyOperations(data.floors.map(migrateFloorFurniture), data.agents);
+              setOperations(migrated.operations); setFloors(migrated.floors); setAgents(migrated.agents);
+              setActiveOperationId(MAIN_OPERATION_ID);
+              setActiveFloorId(migrated.floors.find(floor => floor.id === data.activeFloorId && floor.operationId === MAIN_OPERATION_ID)?.id ?? migrated.floors.find(floor => floor.operationId === MAIN_OPERATION_ID)?.id ?? MAIN_FLOOR_ID);
+            }
             if (data.eventSettings) setEventSettings(normalizeOfficeEvents({ ...data.eventSettings, season: { ...data.eventSettings.season, enabled: data.eventSettings.season.name === 'Natal' ? true : data.eventSettings.season.enabled } }));
+            if (Array.isArray(data.activityLog)) setEventLog(data.activityLog.slice(0, 40));
           }
         }
         const legacy = priorData ? null : localStorage.getItem(oldestStorageKey);
@@ -513,11 +583,11 @@ export default function AgentOfficeView() {
       }
     } catch { /* Dados locais inválidos voltam à configuração inicial. */ }
     setLoaded(true);
-  }, [storageKey, previousStorageKey, olderStorageKey, oldestStorageKey]);
+  }, [storageKey, previousStorageKey, olderStorageKey, olderSupportedStorageKey, oldestStorageKey]);
 
   useEffect(() => {
-    if (loaded) localStorage.setItem(storageKey, JSON.stringify({ operations, activeOperationId, agents, floors, activeFloorId, eventSettings }));
-  }, [operations, activeOperationId, agents, floors, activeFloorId, eventSettings, loaded, storageKey]);
+    if (loaded) localStorage.setItem(storageKey, JSON.stringify({ operations, activeOperationId, agents, floors, activeFloorId, eventSettings, activityLog: eventLog.slice(0, 40) }));
+  }, [operations, activeOperationId, agents, floors, activeFloorId, eventSettings, eventLog, loaded, storageKey]);
 
   useEffect(() => {
     if (!loaded || !user?.uid) return;
@@ -577,7 +647,7 @@ export default function AgentOfficeView() {
       const destinationLabel = destination && targetFloor ? `${targetFloor.name} · ${destination.name}` : undefined;
       setAgents(current => current.map(item => item.id === agent.id ? { ...item, status, walking: Boolean(destination), update: destinationLabel ? `Caminhando para ${destinationLabel}` : status === 'working' ? `Simulando: ${item.task}` : status === 'review' ? 'Resultado demonstrativo pronto para revisar' : 'Fazendo uma pausa breve' } : item));
       if (status === 'review') setReviewIds(current => new Set(current).add(agent.id));
-      setEventLog(current => [`${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · ${agent.name} ${destinationLabel ? `foi para ${destinationLabel}` : status === 'working' ? 'retomou uma atividade' : status === 'review' ? 'preparou uma etapa para revisão' : 'fez uma pausa'}.`, ...current].slice(0, 6));
+      setEventLog(current => [`${activityStamp()} · ${agent.name} ${destinationLabel ? `foi para ${destinationLabel}` : status === 'working' ? `iniciou: ${agent.task}` : status === 'review' ? 'preparou uma etapa demonstrativa para revisão' : 'fez uma pausa'}.`, ...current].slice(0, 40));
     }, 7200);
     return () => window.clearInterval(interval);
   }, [simulation, loaded, agents.length, floors]);
@@ -585,11 +655,15 @@ export default function AgentOfficeView() {
   useEffect(() => {
     if (!fullscreen || fullscreenMode !== 'rotate-floors' || operationFloors.length < 2) return;
     const timer = window.setInterval(() => setFocusedFloorId(current => {
+      if (rotationOrder === 'sequence') {
+        rotationIndex.current = (operationFloors.findIndex(floor => floor.id === current) + 1) % operationFloors.length;
+        return operationFloors[rotationIndex.current]?.id ?? operationFloors[0]?.id ?? '';
+      }
       const choices = operationFloors.filter(floor => floor.id !== current);
       return choices[Math.floor(Math.random() * choices.length)]?.id ?? operationFloors[0]?.id ?? '';
-    }), 12000);
+    }), rotationSeconds * 1000);
     return () => window.clearInterval(timer);
-  }, [fullscreen, fullscreenMode, operationFloors]);
+  }, [fullscreen, fullscreenMode, operationFloors, rotationOrder, rotationSeconds]);
 
   useEffect(() => {
     const update = () => setFullscreen(document.fullscreenElement === pageRef.current);
@@ -617,11 +691,27 @@ export default function AgentOfficeView() {
   const workingCount = visibleAgents.filter(agent => agent.status === 'working').length;
   const activeCelebration = eventSettings.celebration && eventSettings.celebration.until > Date.now() ? eventSettings.celebration : undefined;
   const today = new Date();
-  const todayKey = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const monthDayKey = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const withinSeasonDates = eventSettings.season.start <= eventSettings.season.end
-    ? todayKey >= eventSettings.season.start && todayKey <= eventSettings.season.end
-    : todayKey >= eventSettings.season.start || todayKey <= eventSettings.season.end;
+    ? monthDayKey >= eventSettings.season.start && monthDayKey <= eventSettings.season.end
+    : monthDayKey >= eventSettings.season.start || monthDayKey <= eventSettings.season.end;
   const seasonalActive = eventSettings.season.enabled && (withinSeasonDates || Boolean(eventSettings.seasonPreviewUntil && eventSettings.seasonPreviewUntil > Date.now()));
+
+  useEffect(() => {
+    if (!loaded) return;
+    const triggeredToday = eventSettings.triggeredMilestones ?? {};
+    const completed = eventSettings.milestones.find(item => {
+      if (!item.enabled || triggeredToday[item.id] === todayKey) return false;
+      const value = item.metric === 'sales' ? metrics.sales : metrics.result;
+      return value >= item.target;
+    });
+    if (!completed) return;
+    const now = new Date();
+    const until = celebrationEnds(eventSettings.celebrationDuration, now);
+    setEventSettings(current => ({ ...current, celebration: { title: current.milestones.find(item => item.id === completed.id)?.name || completed.name, until, milestoneId: completed.id, theme: current.celebrationTheme ?? 'spark' }, triggeredMilestones: { ...current.triggeredMilestones, [completed.id]: todayKey } }));
+    setEventLog(current => [`${activityStamp(now)} · meta alcançada: ${completed.name}. A comemoração começou.`, ...current].slice(0, 40));
+    toast.success(`Meta alcançada: ${completed.name}`);
+  }, [loaded, eventSettings.milestones, eventSettings.triggeredMilestones, eventSettings.celebrationDuration, eventSettings.celebrationTheme, metrics, todayKey]);
 
   useEffect(() => {
     const celebration = eventSettings.celebration;
@@ -659,14 +749,14 @@ export default function AgentOfficeView() {
       setSimulationLocations({});
       setSimulationFloorLocations({});
       setSimulation(true);
-      setEventLog(current => ['A operação começou a circular entre as salas. Personagens e tarefas são demonstrativos.', ...current].slice(0, 6));
+      setEventLog(current => [`${activityStamp()} · simulação local iniciada; movimentos e tarefas são demonstrativos.`, ...current].slice(0, 40));
       return;
     }
     setSimulation(false);
     setSimulationLocations({});
     setSimulationFloorLocations({});
     setAgents(current => current.map(agent => ({ ...agent, walking: false, status: agent.status === 'working' ? 'idle' : agent.status, update: agent.status === 'working' ? 'Simulação pausada nesta estação' : agent.update })));
-    setEventLog(current => ['Simulação pausada.', ...current].slice(0, 6));
+    setEventLog(current => [`${activityStamp()} · simulação local pausada.`, ...current].slice(0, 40));
   }
 
   async function toggleFullscreen() {
@@ -699,25 +789,17 @@ export default function AgentOfficeView() {
     toast.success('Agente salvo neste navegador.');
   }
 
-  function addFloor() {
-    const id = crypto.randomUUID();
+  function addFloor(template: OfficeFloorTemplate = 'operations') {
     const index = operationFloors.length + 1;
     const floorStyles: OfficeFloorStyle[] = ['oak', 'walnut', 'stone', 'carpet', 'sage'];
     const floorStyle = floorStyles[operationFloors.length % floorStyles.length];
-    const areas: OfficeArea[] = [
-      { id: crypto.randomUUID(), name: 'Baia de foco', x: 23, y: 35, color: '#67c9c0', kind: 'bay' },
-      { id: crypto.randomUUID(), name: 'Reuniões', x: 75, y: 35, color: '#7dbb82', kind: 'meeting' },
-      { id: crypto.randomUUID(), name: 'Criação', x: 24, y: 73, color: '#d48dc1', kind: 'presentation' },
-      { id: crypto.randomUUID(), name: 'Descanso', x: 74, y: 73, color: '#dfa950', kind: 'lounge' },
-    ];
-    const colors: Record<OfficeFloorStyle, string> = { oak: '#d9ae72', walnut: '#76513e', stone: '#a6a6a0', carpet: '#8e8298', sage: '#95ad88' };
-    const floor: OfficeFloor = { id, operationId: activeOperation?.id ?? MAIN_OPERATION_ID, name: `Andar ${index}`, floorStyle, floorColor: colors[floorStyle], props: createDefaultFurnitureProps(id, areas), areas };
+    const floor = createTemplateFloor(activeOperation?.id ?? MAIN_OPERATION_ID, index, template, floorStyle);
     setFloors(current => [...current, floor]);
-    setAgents(current => [...current, makeRoomAgent(areas[0], id, 'Equipe da operação', activeOperation?.name ?? 'Operação principal')]);
+    setAgents(current => [...current, makeRoomAgent(floor.areas[0], floor.id, 'Equipe da operação', activeOperation?.name ?? 'Operação principal')]);
     setActiveOperationId(floor.operationId);
-    setActiveFloorId(id);
+    setActiveFloorId(floor.id);
     setSelectedId('');
-    toast.success(`${floor.name} criado com quatro áreas editáveis.`);
+    toast.success(`${floor.name} criado pelo modelo ${floorTemplates.find(item => item.id === template)?.name ?? 'Operações'}.`);
   }
 
   function renameFloor(floorId: string, name: string) {
@@ -839,10 +921,10 @@ export default function AgentOfficeView() {
 
   function previewCelebration(milestone: OfficeMilestone) {
     const now = new Date();
-    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
-    setEventSettings(current => ({ ...current, celebration: { title: milestone.name || (milestone.metric === 'sales' ? `${milestone.target} vendas no dia` : `R$ ${milestone.target} de lucro`), until: midnight, milestoneId: milestone.id } }));
-    setEventLog(current => [`${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · comemoração demonstrativa ativada até meia-noite.`, ...current].slice(0, 6));
-    toast.success('Comemoração ativada até meia-noite.');
+    const until = celebrationEnds(eventSettings.celebrationDuration, now);
+    setEventSettings(current => ({ ...current, celebration: { title: milestone.name || (milestone.metric === 'sales' ? `${milestone.target} vendas no dia` : `${currency(milestone.target)} de resultado`), until, milestoneId: milestone.id, theme: current.celebrationTheme ?? 'spark' } }));
+    setEventLog(current => [`${activityStamp(now)} · prévia da comemoração “${milestone.name}” ativada.`, ...current].slice(0, 40));
+    toast.success(`Comemoração ativada até ${new Date(until).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.`);
   }
 
   function previewSeason() {
@@ -877,13 +959,13 @@ export default function AgentOfficeView() {
     if (meetingArrivalTimer.current) window.clearTimeout(meetingArrivalTimer.current);
     meetingArrivalTimer.current = window.setTimeout(() => setMeeting(current => current ? { ...current, arrived: true } : current), 2200);
     setAgents(current => current.map(agent => participants.includes(agent.id) ? { ...agent, status: 'working', update: 'Participando de uma reunião simulada com DaVinci' } : agent));
-    setEventLog(current => [`${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · DaVinci reuniu ${participants.length} agentes na sala ${room.name}.`, ...current].slice(0, 6));
+    setEventLog(current => [`${activityStamp()} · DaVinci reuniu ${participants.length} personagens simulados na sala ${room.name}.`, ...current].slice(0, 40));
     toast.success('Reunião simulada iniciada; os sprites estão indo para a sala.');
     meetingTimer.current = window.setTimeout(() => {
       setMeeting(null);
       if (meetingArrivalTimer.current) window.clearTimeout(meetingArrivalTimer.current);
       setAgents(current => current.map(agent => { const old = previous.find(item => item.id === agent.id); return old ? { ...agent, status: old.status, update: 'Reunião demonstrativa concluída' } : agent; }));
-      setEventLog(current => [`${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · a reunião simulada terminou; o time voltou às estações.`, ...current].slice(0, 6));
+      setEventLog(current => [`${activityStamp()} · a reunião simulada terminou; os personagens voltaram às estações.`, ...current].slice(0, 40));
     }, 14000);
   }
 
@@ -897,7 +979,10 @@ export default function AgentOfficeView() {
 
   function completeReview(agentId: string) {
     setReviewIds(current => { const next = new Set(current); next.delete(agentId); return next; });
-    setAgents(current => current.map(agent => agent.id === agentId ? { ...agent, status: 'idle', update: 'Revisão demonstrativa concluída' } : agent));
+    const agent = agents.find(item => item.id === agentId);
+    setAgents(current => current.map(item => item.id === agentId ? { ...item, status: 'idle', update: 'Revisão demonstrativa concluída' } : item));
+    setEventSettings(current => ({ ...current, simulatedCompleted: (current.completedDate === todayKey ? current.simulatedCompleted ?? 0 : 0) + 1, completedDate: todayKey }));
+    setEventLog(current => [`${activityStamp()} · etapa simulada de ${agent?.name ?? 'um agente'} aprovada na revisão.`, ...current].slice(0, 40));
   }
 
   function openAgentChat() {
@@ -913,14 +998,14 @@ export default function AgentOfficeView() {
   return <div ref={pageRef} className={`agent-office-page ${fullscreen ? 'agent-office-fullscreen' : ''}`}>
     <header className="agent-office-header">
       <div className="agent-office-brand"><button type="button" className="agent-office-back" onClick={() => navigate('/workspace')} aria-label="Voltar ao Hub Office"><ArrowLeft size={18}/></button><div className="agent-office-mark"><Bot size={20}/></div><div><span className="office-kicker">HUB OFFICE</span><h1>Escritório de agentes</h1></div></div>
-      <div className="agent-office-controls"><span className="office-live-badge"><i/> {simulation ? 'Demonstração ativa' : 'Agentes simulados'}</span><button type="button" className="office-toolbar-button" onClick={() => setEditingAgent(null)}><Plus size={16}/> Novo agente</button><button type="button" className="office-toolbar-button" onClick={() => setEditingEvents(true)}><CalendarDays size={16}/> Metas e temas</button><button type="button" className="office-toolbar-button" onClick={callTeamMeeting}><Users size={16}/> Chamar reunião</button><button type="button" className="office-toolbar-button" onClick={toggleSimulation}>{simulation ? <Pause size={16}/> : <Play size={16}/>} {simulation ? 'Pausar simulação' : 'Simular atividade'}</button><button type="button" className="office-toolbar-button office-all-rooms-button" onClick={() => { setFullscreenMode('all-floors'); void toggleFullscreen(); }}><LayoutGrid size={16}/> Todos os andares</button><button type="button" className="office-fullscreen-button" onClick={toggleFullscreen} title={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}>{fullscreen ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}<span>{fullscreen ? 'Sair da tela cheia' : 'Focar no monitor'}</span></button></div>
+      <div className="agent-office-controls"><span className="office-live-badge"><i/> {simulation ? 'Simulação local ativa' : 'Simulação local pausada'}</span><button type="button" className="office-toolbar-button" onClick={() => setEditingAgent(null)}><Plus size={16}/> Novo agente</button><button type="button" className="office-toolbar-button" onClick={() => setEditingEvents(true)}><CalendarDays size={16}/> Metas e temas</button><button type="button" className="office-toolbar-button" onClick={callTeamMeeting}><Users size={16}/> Chamar reunião</button><button type="button" className="office-toolbar-button" onClick={toggleSimulation}>{simulation ? <Pause size={16}/> : <Play size={16}/>} {simulation ? 'Pausar simulação' : 'Simular atividade'}</button><button type="button" className="office-toolbar-button office-all-rooms-button" onClick={() => { setFullscreenMode('all-floors'); void toggleFullscreen(); }}><LayoutGrid size={16}/> Todos os andares</button><button type="button" className="office-fullscreen-button" onClick={toggleFullscreen} title={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}>{fullscreen ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}<span>{fullscreen ? 'Sair da tela cheia' : 'Focar no monitor'}</span></button></div>
     </header>
-    {fullscreen && <nav className="office-fullscreen-toolbar" aria-label="Visualizações em tela cheia"><div><span className="office-live-badge"><i/> {simulation ? 'Simulação ativa' : 'Simulação pausada'}</span><label className="office-fullscreen-operation"><Layers size={14}/><select value={activeOperation?.id ?? ''} onChange={event => selectOperation(event.target.value)} aria-label="Selecionar operação">{operations.map(operation => <option key={operation.id} value={operation.id}>{operation.name}</option>)}</select></label><button type="button" className={fullscreenMode === 'floor' ? 'is-active' : ''} onClick={() => setFullscreenMode('floor')}><Eye size={15}/> Um andar</button><button type="button" className={fullscreenMode === 'all-floors' ? 'is-active' : ''} onClick={() => setFullscreenMode('all-floors')}><LayoutGrid size={15}/> Todos os andares</button><button type="button" className={fullscreenMode === 'rotate-floors' ? 'is-active' : ''} onClick={() => { setFullscreenMode('rotate-floors'); if (!focusedFloorId) setFocusedFloorId(activeFloor?.id ?? ''); }}><RotateCw size={15}/> Alternar andares</button><button type="button" onClick={toggleSimulation}>{simulation ? <Pause size={15}/> : <Play size={15}/>} {simulation ? 'Pausar' : 'Simular'}</button></div><button type="button" className="office-fullscreen-exit" onClick={toggleFullscreen}><Minimize2 size={16}/> Sair</button></nav>}
+    {fullscreen && <nav className="office-fullscreen-toolbar" aria-label="Visualizações em tela cheia"><div><span className="office-live-badge"><i/> {simulation ? 'Simulação ativa' : 'Simulação pausada'}</span><label className="office-fullscreen-operation"><Layers size={14}/><select value={activeOperation?.id ?? ''} onChange={event => selectOperation(event.target.value)} aria-label="Selecionar operação">{operations.map(operation => <option key={operation.id} value={operation.id}>{operation.name}</option>)}</select></label><button type="button" className={fullscreenMode === 'floor' ? 'is-active' : ''} onClick={() => setFullscreenMode('floor')}><Eye size={15}/> Um andar</button><button type="button" className={fullscreenMode === 'all-floors' ? 'is-active' : ''} onClick={() => setFullscreenMode('all-floors')}><LayoutGrid size={15}/> Todos os andares</button><button type="button" className={fullscreenMode === 'rotate-floors' ? 'is-active' : ''} onClick={() => { setFocusedFloorId(activeFloor?.id ?? ''); setFullscreenMode('rotate-floors'); }}><RotateCw size={15}/> Alternar andares</button>{fullscreenMode === 'rotate-floors' && <><label className="office-rotation-control"><span>Ordem</span><select value={rotationOrder} onChange={event => setRotationOrder(event.target.value as 'random' | 'sequence')}><option value="random">Aleatória</option><option value="sequence">Sequencial</option></select></label><label className="office-rotation-control"><span>Troca</span><select value={rotationSeconds} onChange={event => setRotationSeconds(Number(event.target.value))}><option value={8}>8 s</option><option value={12}>12 s</option><option value={20}>20 s</option></select></label></>}<button type="button" onClick={toggleSimulation}>{simulation ? <Pause size={15}/> : <Play size={15}/>} {simulation ? 'Pausar' : 'Simular'}</button></div><button type="button" className="office-fullscreen-exit" onClick={toggleFullscreen}><Minimize2 size={16}/> Sair</button></nav>}
     <div className="agent-office-body">
-      {fullscreen && fullscreenMode === 'all-floors' ? <FullscreenFloorBoard floors={operationFloors} agents={displayAgents.filter(agent => operationFloors.some(floor => floor.id === agent.floorId))} activeFloorId={activeFloor?.id ?? ''} simulation={simulation} meeting={meeting} selectedId={selected?.id ?? ''} reviewIds={reviewIds} celebration={activeCelebration} season={seasonalActive && !activeCelebration ? eventSettings.season.name : undefined} onSelectFloor={focusFloor} onSelectAgent={agent => setSelectedId(agent.id)}/> : <>
+      {fullscreen && fullscreenMode === 'all-floors' ? <FullscreenFloorBoard floors={operationFloors} agents={displayAgents.filter(agent => operationFloors.some(floor => floor.id === agent.floorId))} activeFloorId={activeFloor?.id ?? ''} simulation={simulation} meeting={meeting} selectedId={selected?.id ?? ''} reviewIds={reviewIds} celebration={activeCelebration} season={seasonalActive && !activeCelebration ? eventSettings.season.name : undefined} metrics={metrics} onSelectFloor={focusFloor} onSelectAgent={agent => setSelectedId(agent.id)}/> : <>
       <section className="agent-office-map-column">
-        {!fullscreen && <div className="agent-office-map-title"><div><p className="office-kicker">{activeOperation?.name ?? 'Operação'} <span>·</span> {activeFloor?.name ?? 'Andar'} · {visibleAgents.length} pessoas · {operationFloors.length} andares</p><h2>Esta operação em movimento</h2></div><div className="office-map-actions"><label className="office-floor-select-label"><Layers size={15}/><select value={activeOperation?.id ?? ''} onChange={event => selectOperation(event.target.value)} aria-label="Selecionar operação">{operations.map(operation => <option key={operation.id} value={operation.id}>{operation.name}</option>)}</select></label><label className="office-floor-select-label"><Layers size={15}/><select value={activeFloor?.id ?? ''} onChange={event => selectFloor(event.target.value)} aria-label="Selecionar andar">{operationFloors.map(floor => <option key={floor.id} value={floor.id}>{floor.name}</option>)}</select></label><button className={`office-edit-layout ${editingLayout ? 'is-active' : ''}`} type="button" onClick={() => setEditingLayout(value => !value)}><Move size={15}/>{editingLayout ? 'Concluir posição' : 'Mover móveis'}</button><button className="office-edit-layout" type="button" onClick={() => setEditingSpaces(true)}><Pencil size={15}/> Operações e andares</button><button className="office-edit-layout" type="button" onClick={() => setEditingAgent(null)}><Plus size={15}/> Novo agente</button></div></div>}
-        <OfficeRoom agents={visibleAgents} areas={viewFloor?.areas ?? []} props={viewFloor?.props ?? []} floorId={viewFloor?.id ?? MAIN_FLOOR_ID} floorStyle={viewFloor?.floorStyle ?? 'oak'} floorColor={viewFloor?.floorColor ?? '#d9ae72'} meeting={meeting} selectedId={selected?.id ?? ''} simulation={simulation} fullscreen={fullscreen} editingLayout={editingLayout} onMoveProp={moveProp} onExitFullscreen={toggleFullscreen} reviewIds={reviewIds} celebration={activeCelebration} season={seasonalActive && !activeCelebration ? eventSettings.season.name : undefined} onSelect={agent => setSelectedId(agent.id)}/>
+        {!fullscreen && <div className="agent-office-map-title"><div><p className="office-kicker">{activeOperation?.name ?? 'Operação'} <span>·</span> {activeFloor?.name ?? 'Andar'} · {activeFloor?.purpose ?? 'Operação geral'} · {visibleAgents.length} pessoas · {operationFloors.length} andares</p><h2>Esta operação em movimento</h2></div><div className="office-map-actions"><label className="office-floor-select-label"><Layers size={15}/><select value={activeOperation?.id ?? ''} onChange={event => selectOperation(event.target.value)} aria-label="Selecionar operação">{operations.map(operation => <option key={operation.id} value={operation.id}>{operation.name}</option>)}</select></label><label className="office-floor-select-label"><Layers size={15}/><select value={activeFloor?.id ?? ''} onChange={event => selectFloor(event.target.value)} aria-label="Selecionar andar">{operationFloors.map(floor => <option key={floor.id} value={floor.id}>{floor.name}</option>)}</select></label><button className={`office-edit-layout ${editingLayout ? 'is-active' : ''}`} type="button" onClick={() => setEditingLayout(value => !value)}><Move size={15}/>{editingLayout ? 'Concluir posição' : 'Mover móveis'}</button><button className="office-edit-layout" type="button" onClick={() => setEditingSpaces(true)}><Pencil size={15}/> Operações e andares</button><button className="office-edit-layout" type="button" onClick={() => setEditingAgent(null)}><Plus size={15}/> Novo agente</button></div></div>}
+        <OfficeRoom agents={visibleAgents} areas={viewFloor?.areas ?? []} props={viewFloor?.props ?? []} floorId={viewFloor?.id ?? MAIN_FLOOR_ID} floorStyle={viewFloor?.floorStyle ?? 'oak'} floorColor={viewFloor?.floorColor ?? '#d9ae72'} meeting={meeting} selectedId={selected?.id ?? ''} simulation={simulation} fullscreen={fullscreen} editingLayout={editingLayout} onMoveProp={moveProp} onExitFullscreen={toggleFullscreen} reviewIds={reviewIds} celebration={activeCelebration} season={seasonalActive && !activeCelebration ? eventSettings.season.name : undefined} metrics={metrics} onSelect={agent => setSelectedId(agent.id)}/>
         <div className="agent-office-map-footer"><span><i className="office-dot office-dot-working"/> {workingCount} trabalhando</span><span><i className="office-dot office-dot-review"/> {reviewAgents.length} para revisar</span><span className="office-map-credit">Personagens: Habblaud · móveis: Pixel Agents (MIT)</span></div>
       </section>
       <aside className="agent-office-sidebar">
@@ -941,6 +1026,6 @@ export default function AgentOfficeView() {
     </div>
     <AnimatePresence>{editingAgent !== undefined && <motion.div key="agent-editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AgentEditor agent={editingAgent ?? undefined} floors={floors} defaultFloorId={activeFloor?.id ?? MAIN_FLOOR_ID} onSave={saveAgent} onClose={() => setEditingAgent(undefined)}/></motion.div>}</AnimatePresence>
     <AnimatePresence>{editingSpaces && <motion.div key="space-editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><SpaceEditor operations={operations} activeOperationId={activeOperation?.id ?? MAIN_OPERATION_ID} floors={floors} selectedFloorId={activeFloor?.id ?? MAIN_FLOOR_ID} onSelectOperation={selectOperation} onAddOperation={addOperation} onRenameOperation={renameOperation} onDeleteOperation={deleteOperation} onSelectFloor={selectFloor} onAddFloor={addFloor} onRenameFloor={renameFloor} onDeleteFloor={deleteFloor} onUpdateFloor={updateFloor} onAddArea={addArea} onUpdateArea={updateArea} onDeleteArea={deleteArea} onAddProp={addProp} onUpdateProp={updateProp} onDeleteProp={deleteProp} onClose={() => setEditingSpaces(false)}/></motion.div>}</AnimatePresence>
-    <AnimatePresence>{editingEvents && <motion.div key="event-editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><EventSettingsEditor settings={eventSettings} onUpdate={updateEventSettings} onPreview={previewCelebration} onPreviewSeason={previewSeason} onClose={() => setEditingEvents(false)}/></motion.div>}</AnimatePresence>
+    <AnimatePresence>{editingEvents && <motion.div key="event-editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><EventSettingsEditor settings={eventSettings} metrics={metrics} onUpdate={updateEventSettings} onPreview={previewCelebration} onPreviewSeason={previewSeason} onClose={() => setEditingEvents(false)}/></motion.div>}</AnimatePresence>
   </div>;
 }

@@ -826,3 +826,13 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Tela cheia**: seletor de operação e três modos: um andar, todos os andares daquela operação em grade simultânea ou alternância automática aleatória entre os andares a cada 12 segundos.
 - **Pisos**: cada andar persiste uma textura (carvalho, nogueira, pedra, carpete ou madeira verde) e um tom base editável. Andares novos alternam texturas; operações de produto/nicho também têm acabamentos iniciais distintos.
 - **Simulação**: inicia ativa, anima o time entre áreas e andares da mesma operação e não muda a posição salva do posto. Reuniões ficam limitadas à operação selecionada. Dados, personagens e simulação continuam locais; VPS e agentes reais não estão conectados.
+
+## 50. Indicadores reais, histórico e templates do Hub Office
+
+- **Data**: 28/11/2026.
+- **Armazenamento v7**: cada andar pode guardar uma função curta além do nome; migra dados v6/v5/v4 preservando operações, móveis e áreas. A nova criação de andares oferece modelos de operações, conteúdo, campanhas, produto e reuniões, todos editáveis.
+- **Financeiro real**: os indicadores vêm da consulta em tempo real `useTransactions()` usada pelo painel financeiro. A regra de data segue `paymentDate || date`, igual ao `FinancialScreenView`; vendas pagas contam transações INCOME com status PAID, pendências contam status PENDING e faturamento pago soma as liquidadas. Entradas geradas e despesas são incluídas no resumo financeiro. A antiga entrada manual de vendas foi removida.
+- **Monitores**: mostram vendas pagas, faturamento pago, cobranças pendentes, etapas demonstrativas concluídas e revisões demonstrativas. A legenda deixa claro o que vem do Financeiro/checkout e o que pertence à simulação local.
+- **Metas automáticas**: metas de vendas usam o número real de cobranças pagas; metas de resultado usam faturamento pago menos despesas registradas no dia. Comemorações podem durar até meia-noite (padrão), 2, 6, 12 ou 24 horas, com brilho festivo, dourado ou confetes; cada meta só dispara uma vez ao dia. O botão de prévia continua disponível.
+- **Atividade e personagens**: até 40 eventos recentes persistem junto à configuração local. A simulação descreve tarefa/status no cartão do personagem, conta etapas demonstrativas aprovadas e mantém revisão como alerta visual. VPS e executores reais permanecem desconectados.
+- **Tela cheia**: a rotação dos andares agora aceita ordem aleatória ou sequencial e troca a cada 8, 12 ou 20 segundos.

@@ -491,3 +491,49 @@
   .office-computer-on,.office-sprite-working,.office-window::after,.office-wall-lamp,.office-sunbeam-right,.office-plant,.office-event-banner,.office-room.has-celebration::after,.office-christmas-garland i { animation:none; }
   .office-walker { will-change:auto; }
 }
+
+/* Operational detail: status screens, editable floor purpose, and event controls. */
+.office-tv-monitor { position:absolute;z-index:4;top:13%;left:37%;display:grid;width:33%;min-width:150px;min-height:66px;gap:4px;padding:5px 7px;border:3px solid #344958;border-radius:5px;color:#d8f3e9;background:linear-gradient(145deg,#172c36,#0e1923);box-shadow:0 4px 0 #80543b,0 7px 12px rgba(48,34,24,.27),inset 0 0 0 1px rgba(135,206,188,.16);font-family:ui-monospace,monospace; }
+.office-tv-top { display:flex;align-items:center;justify-content:space-between;color:#9bcabd;font-size:6px;font-weight:800;letter-spacing:.09em; }
+.office-tv-top i { width:5px;height:5px;border-radius:50%;background:#62d2a8;box-shadow:0 0 6px #62d2a8; }
+.office-tv-metrics { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px; }
+.office-tv-metrics span { display:grid;gap:1px;min-width:0; }
+.office-tv-metrics small { overflow:hidden;color:#7897a0;font-size:5px;letter-spacing:.04em;text-overflow:ellipsis;white-space:nowrap; }
+.office-tv-metrics strong { overflow:hidden;color:#eaf6e9;font-size:clamp(8px,.8vw,12px);font-weight:800;text-overflow:ellipsis;white-space:nowrap; }
+.office-tv-metrics strong.is-negative { color:#ff9b8c; }
+.office-tv-foot { overflow:hidden;color:#6e8c91;font-size:5px;text-overflow:ellipsis;white-space:nowrap; }
+.office-wall-art { top:13%;left:75%;width:30px;height:22px; }
+.office-wall-art img { width:20px; }
+.office-clock { top:76%;left:52%;padding:3px 7px;font-size:6px; }
+.office-room.celebration-gold .office-event-banner.is-milestone { color:#4a3515;background:linear-gradient(135deg,#ffe08c,#e6a836); }
+.office-room.celebration-gold .office-event-banner.is-milestone small { color:#705118; }
+.office-room.celebration-gold.has-celebration::after { background:radial-gradient(circle at 50% 25%,rgba(255,213,99,.29),transparent 54%); }
+.office-room.celebration-confetti .office-event-banner.is-milestone { background:linear-gradient(115deg,#e45f8e,#7969d7 48%,#38a9aa); }
+.office-room.celebration-confetti.has-celebration::after { background:radial-gradient(circle at 18% 20%,rgba(255,221,126,.23),transparent 22%),radial-gradient(circle at 78% 28%,rgba(255,115,150,.2),transparent 24%),radial-gradient(circle at 50% 65%,rgba(88,226,206,.13),transparent 32%); }
+.office-agent-tag em { padding:2px 4px;border-radius:4px;color:#19404a;background:#a5e3dc;font-size:7px;font-style:normal;font-weight:800; }
+.office-floor-tile-heading strong { display:grid;gap:2px; }
+.office-floor-tile-heading strong small { color:#8ea9ad;font-size:8px;font-weight:550; }
+.office-template-select,.office-rotation-control { display:flex;min-height:32px;align-items:center;gap:5px;padding:0 8px;border:1px solid rgba(205,222,236,.12);border-radius:8px;color:#8ea3ae;background:rgba(255,255,255,.025);font-size:8px; }
+.office-template-select select,.office-rotation-control select { max-width:125px;border:0;outline:0;color:#dce8e9;background:transparent;font:inherit;font-size:9px; }
+.office-template-select option,.office-rotation-control option { color:#1d2935;background:#fff; }
+.office-floor-tabs .office-template-select { margin-left:auto; }
+.office-floor-tabs button.office-add-floor { margin-left:0; }
+.office-floor-identity { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.office-daily-metrics,.office-celebration-options { display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:10px;padding:10px;border:1px solid rgba(210,224,233,.075);border-radius:11px;background:rgba(255,255,255,.025); }
+.office-daily-metrics label,.office-celebration-options label { display:grid;gap:5px;color:#aeb9c5;font-size:9px;font-weight:620; }
+.office-daily-metrics > span { display:grid;gap:6px;color:#aeb9c5;font-size:9px;font-weight:620; }
+.office-daily-metrics input,.office-celebration-options select { min-width:0;height:33px;padding:0 8px;border:1px solid rgba(205,222,236,.12);border-radius:8px;color:#e5edf3;background:#0e1926;font:inherit;font-size:10px; }
+.office-daily-metrics > span strong { color:#def5e9;font-size:18px; }
+.office-activity-list { max-height:235px;overflow:auto;padding-right:4px; }
+.office-activity-list p { min-height:20px; }
+.office-activity-list::-webkit-scrollbar { width:5px; }.office-activity-list::-webkit-scrollbar-thumb { border-radius:9px;background:rgba(143,183,191,.24); }
+.office-fullscreen-toolbar .office-rotation-control { min-height:34px;padding:0 7px;font-size:8px;white-space:nowrap; }
+.office-fullscreen-toolbar .office-rotation-control select { max-width:82px;font-size:9px; }
+@media (max-width: 760px) {
+  .office-tv-monitor { left:31%;width:42%;min-width:120px;min-height:54px;padding:4px; }
+  .office-tv-metrics small { font-size:4px; }.office-tv-foot { font-size:4px; }
+  .office-floor-identity,.office-daily-metrics,.office-celebration-options { grid-template-columns:1fr; }
+  .office-daily-metrics > span { align-self:start; }
+  .office-template-select { margin-left:0; }
+  .office-floor-tabs .office-add-floor { margin-left:0; }
+}
