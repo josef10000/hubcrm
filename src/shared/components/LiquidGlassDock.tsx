@@ -70,12 +70,13 @@ export default function LiquidGlassDock() {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [peekAutoHide, setPeekAutoHide] = useState(false);
   const [dockHoverCapable, setDockHoverCapable] = useState(() => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
   const [dockRevealed, setDockRevealed] = useState(false);
-  const [dockHasFocus, setDockHasFocus] = useState(false);
+  const [dockHasKeyboardFocus, setDockHasKeyboardFocus] = useState(false);
 
   const dockContainerRef = useRef<HTMLDivElement>(null);
+  const revealAreaRef = useRef<HTMLDivElement>(null);
+  const hideTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const media = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -85,49 +86,42 @@ export default function LiquidGlassDock() {
     return () => media.removeEventListener('change', sync);
   }, []);
 
-  // Auto-hide inteligente em editores imersivos (Funis, VSL, Canvas, Wiki)
-  const isImmersiveEditor =
-    location.pathname.startsWith('/funnels/') ||
-    location.pathname.startsWith('/canvas/') ||
-    location.pathname === '/wiki';
+  function dismissDock() {
+    window.clearTimeout(hideTimerRef.current);
+    setActiveGroupId(null);
+    setProfileMenuOpen(false);
+    setHoveredIdx(null);
+    setHoveredLabel(null);
+    setDockRevealed(false);
+  }
+
+  function revealDock(event: React.PointerEvent) {
+    if (!dockHoverCapable || event.pointerType === 'touch') return;
+    window.clearTimeout(hideTimerRef.current);
+    setDockRevealed(true);
+  }
+
+  function scheduleDismiss(event: React.PointerEvent) {
+    if (!dockHoverCapable || event.pointerType === 'touch' || dockHasKeyboardFocus) return;
+    window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(dismissDock, 180);
+  }
 
   useEffect(() => {
-    if (!dockHoverCapable) return;
-    const onMouseMove = (e: MouseEvent) => {
-      const distanceFromBottom = window.innerHeight - e.clientY;
-      if (distanceFromBottom <= 88) {
-        setDockRevealed(true);
-        if (isImmersiveEditor) setPeekAutoHide(true);
-      } else if (distanceFromBottom > 132 && !activeGroupId && !profileMenuOpen && !dockHasFocus) {
-        setDockRevealed(false);
-        if (isImmersiveEditor) setPeekAutoHide(false);
-      }
+    const handleOutside = (event: PointerEvent) => {
+      if (dockContainerRef.current?.contains(event.target as Node)) return;
+      setDockHasKeyboardFocus(false);
+      dismissDock();
     };
-    window.addEventListener('mousemove', onMouseMove);
-    return () => window.removeEventListener('mousemove', onMouseMove);
-  }, [dockHoverCapable, isImmersiveEditor, activeGroupId, profileMenuOpen, dockHasFocus]);
-
-  // Fechar bandejas ao clicar fora ou apertar ESC
-  useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dockContainerRef.current && !dockContainerRef.current.contains(e.target as Node)) {
-        setActiveGroupId(null);
-        setProfileMenuOpen(false);
-        setDockRevealed(false);
-      }
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') dismissDock();
     };
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActiveGroupId(null);
-        setProfileMenuOpen(false);
-        setDockRevealed(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('pointerdown', handleOutside);
     window.addEventListener('keydown', handleEsc);
     return () => {
-      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('pointerdown', handleOutside);
       window.removeEventListener('keydown', handleEsc);
+      window.clearTimeout(hideTimerRef.current);
     };
   }, []);
 
@@ -217,9 +211,7 @@ export default function LiquidGlassDock() {
     return { scale: 1, y: 0 };
   };
 
-  const isHiddenByImmersive =
-    isImmersiveEditor && !peekAutoHide && !activeGroupId && !profileMenuOpen;
-  const isDockHidden = isHiddenByImmersive || (dockHoverCapable && !dockRevealed && !activeGroupId && !profileMenuOpen && !dockHasFocus);
+  const isDockHidden = dockHoverCapable && !dockRevealed && !dockHasKeyboardFocus;
 
   // Estilo Liquid Glass adaptativo para temas escuros e claros (ex: Branco Elite)
   const glassSurfaceStyle: React.CSSProperties = palette.isLight
@@ -252,46 +244,37 @@ export default function LiquidGlassDock() {
 
   return (
     <>
-      {/* Indicador sutil na base quando auto-oculto em editores de tela cheia */}
-      {isDockHidden && (
+      {dockHoverCapable && (
         <div
-          data-dock-reveal="true"
-          onMouseEnter={() => {
-            setDockRevealed(true);
-            if (isImmersiveEditor) setPeekAutoHide(true);
-          }}
-          className="fixed bottom-0 inset-x-0 h-6 z-[69] flex items-end justify-center pb-1.5 cursor-pointer"
+          ref={revealAreaRef}
+          onPointerEnter={revealDock}
+          onPointerLeave={scheduleDismiss}
+          className="fixed bottom-0 left-1/2 z-[69] flex h-6 w-[min(24rem,calc(100vw-1.25rem))] -translate-x-1/2 items-end justify-center pb-1.5"
           aria-hidden="true"
         >
           <div
-            className="w-20 h-1 rounded-full backdrop-blur-md opacity-45 transition-opacity hover:opacity-90"
-            style={{
-              backgroundColor: `rgba(${palette.rgb}, 0.45)`,
-              boxShadow: `0 0 12px rgba(${palette.rgb}, 0.5)`
-            }}
+            className={`h-1 w-20 rounded-full transition-opacity ${isDockHidden ? 'opacity-45' : 'opacity-0'}`}
+            style={{ backgroundColor: palette.primaryHex }}
           />
         </div>
       )}
 
       <div
         ref={dockContainerRef}
-        onMouseEnter={() => {
-          setDockRevealed(true);
-        }}
-        onMouseLeave={event => {
-          setHoveredIdx(null);
-          setHoveredLabel(null);
-          if (dockHoverCapable && !activeGroupId && !profileMenuOpen && !dockHasFocus && window.innerHeight - event.clientY > 88) {
-            setDockRevealed(false);
+        onPointerEnter={revealDock}
+        onPointerLeave={scheduleDismiss}
+        onPointerDownCapture={() => setDockHasKeyboardFocus(false)}
+        onFocusCapture={event => {
+          if (event.target.matches(':focus-visible')) {
+            window.clearTimeout(hideTimerRef.current);
+            setDockHasKeyboardFocus(true);
           }
         }}
-        onFocusCapture={() => {
-          setDockHasFocus(true);
-          setDockRevealed(true);
-        }}
         onBlurCapture={event => {
-          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-            setDockHasFocus(false);
+          if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+          setDockHasKeyboardFocus(false);
+          if (dockHasKeyboardFocus && dockHoverCapable && !event.currentTarget.matches(':hover') && !revealAreaRef.current?.matches(':hover')) {
+            dismissDock();
           }
         }}
         className={`fixed bottom-3.5 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center max-w-[calc(100vw-1.25rem)] transition-all duration-300 ${

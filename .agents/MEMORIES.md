@@ -770,3 +770,9 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Cartões e contas**: cartão mantém `bankAccountId`; cadastro/edição exige escolher uma conta ativa quando houver, e pagamentos de fatura continuam usando essa conta como sugestão, com possibilidade de trocar. Sem conta ativa, cartão segue cadastrável sem vínculo.
 - **Visual da carteira**: cartões bancários e de crédito preservam frente/verso, bandeiras, logos e acabamentos, com área 3D e cartões de conteúdo mais compactos.
 - **Dock**: em dispositivos com mouse/ponteiro fino, dock recolhida e revelada quando o ponteiro chega à borda inferior; continua aberta com menu ativo e reaparece por foco de teclado. Touch continua sempre visível fora de editores imersivos.
+
+## 43. Recolhimento da Dock após uso
+
+- **Data**: 28/11/2026.
+- **Mouse**: a área central na borda inferior revela a Dock. Sair da barra e da bandeja fecha o menu e recolhe a Dock após 180 ms. Voltar para a área cancela o fechamento.
+- **Acessibilidade**: o clique não mantém a Dock aberta por foco. O foco visível de teclado mantém o acesso e a barra continua disponível em dispositivos sem hover.
