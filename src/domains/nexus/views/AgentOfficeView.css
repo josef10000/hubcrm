@@ -118,7 +118,12 @@
 .office-fullscreen-button { min-width: 145px; }
 .office-all-rooms-button { color:#c6f5f0; border-color:rgba(93,190,174,.22); }
 
-.office-fullscreen-toolbar { position:fixed;z-index:150;top:12px;left:50%;display:flex;max-width:calc(100vw - 28px);align-items:center;justify-content:space-between;gap:12px;padding:7px;border:1px solid rgba(220,238,241,.17);border-radius:15px;background:rgba(11,20,29,.78);box-shadow:0 12px 36px rgba(0,0,0,.25);backdrop-filter:blur(14px);transform:translateX(-50%); }
+.office-fullscreen-controls { position:fixed;z-index:150;top:0;left:0;right:0;height:78px;pointer-events:none; }
+.office-fullscreen-edge { position:absolute;top:0;left:0;right:0;height:22px;display:flex;justify-content:center;pointer-events:auto; }
+.office-fullscreen-edge button { display:flex;align-items:center;gap:5px;height:17px;padding:0 10px;border:0;border-radius:0 0 9px 9px;color:#c5d3dc;background:rgba(11,20,29,.16);font:inherit;font-size:9px;opacity:.14;cursor:pointer;transition:opacity .18s ease,background .18s ease; }
+.office-fullscreen-edge button:hover,.office-fullscreen-controls:hover .office-fullscreen-edge button,.office-fullscreen-controls.is-open .office-fullscreen-edge button { opacity:.85;background:rgba(11,20,29,.72); }
+.office-fullscreen-toolbar { position:fixed;z-index:150;top:12px;left:50%;display:flex;max-width:calc(100vw - 28px);align-items:center;justify-content:space-between;gap:12px;padding:7px;border:1px solid rgba(220,238,241,.17);border-radius:15px;background:rgba(11,20,29,.78);box-shadow:0 12px 36px rgba(0,0,0,.25);backdrop-filter:blur(14px);transform:translate(-50%,-145%);opacity:0;visibility:hidden;pointer-events:none;transition:transform .2s ease,opacity .18s ease,visibility .2s ease; }
+.office-fullscreen-controls:hover .office-fullscreen-toolbar,.office-fullscreen-controls.is-open .office-fullscreen-toolbar,.office-fullscreen-controls:focus-within .office-fullscreen-toolbar { transform:translate(-50%,0);opacity:1;visibility:visible;pointer-events:auto; }
 .office-fullscreen-toolbar > div { display:flex;align-items:center;gap:5px; }
 .office-fullscreen-toolbar button { display:inline-flex;min-height:34px;align-items:center;justify-content:center;gap:7px;padding:0 11px;border:1px solid transparent;border-radius:10px;color:#c8d5df;background:transparent;font:inherit;font-size:11px;font-weight:650;white-space:nowrap;cursor:pointer; }
 .office-fullscreen-toolbar button:hover,.office-fullscreen-toolbar button.is-active { border-color:rgba(117,219,208,.26);color:#effffb;background:rgba(79,178,166,.18); }
@@ -422,7 +427,8 @@
 .agent-office-fullscreen .office-pixel-note { display:none; }
 
 @media (max-width: 720px) {
-  .office-fullscreen-toolbar { top:8px;left:8px;right:8px;max-width:none;overflow-x:auto;transform:none; }
+  .office-fullscreen-toolbar { top:8px;left:8px;right:8px;max-width:none;overflow-x:auto;transform:translateY(-145%); }
+  .office-fullscreen-controls:hover .office-fullscreen-toolbar,.office-fullscreen-controls.is-open .office-fullscreen-toolbar,.office-fullscreen-controls:focus-within .office-fullscreen-toolbar { transform:translateY(0); }
   .office-fullscreen-toolbar > div { flex:none; }
   .office-fullscreen-toolbar .office-live-badge { display:none; }
   .office-fullscreen-toolbar button { padding:0 8px;font-size:10px; }

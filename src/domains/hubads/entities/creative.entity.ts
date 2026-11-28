@@ -38,6 +38,8 @@ export const CreativeScoreSchema = z.enum([
   'pending'
 ] as const);
 
+export const CreativeProductTypeSchema = z.enum(['own', 'affiliate', 'unlinked'] as const);
+
 export const CreativeSchema = z.object({
   id: z.string(),
   title: z.string().min(2, "Título muito curto"),
@@ -63,6 +65,13 @@ export const CreativeSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number().optional(),
   campaignName: z.string().optional().or(z.literal('')),
+  productId: z.string().optional().or(z.literal('')),
+  productName: z.string().optional().or(z.literal('')),
+  productType: CreativeProductTypeSchema.default('unlinked'),
+  niche: z.string().optional().or(z.literal('')),
+  audienceGender: z.string().optional().or(z.literal('')),
+  market: z.string().optional().or(z.literal('')),
+  sourceUrl: z.string().optional().or(z.literal('')),
 });
 
 export type CreativeEntity = z.infer<typeof CreativeSchema>;

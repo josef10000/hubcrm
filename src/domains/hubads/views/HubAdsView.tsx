@@ -7,6 +7,7 @@ import { useCreatives } from '../hooks/useCreatives';
 import { useLeads, useClients } from '@/hooks/queries/useClients';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRMStore } from '@/store/useCRMStore';
+import { useCRM } from '@crm/contexts/CRMContext';
 import { hubadsService } from '../services/hubads.service';
 import { CreativeEntity } from '../entities/creative.entity';
 import { HubAdsStats } from '../components/HubAdsStats';
@@ -15,6 +16,7 @@ import { CreativeModal } from '../components/CreativeModal';
 
 export default function HubAdsView() {
   const orgId = useCRMStore((state) => state.effectiveOrgId);
+  const { offers: products = [] } = useCRM();
   const { user } = useAuth();
   
   // Real-time Queries
@@ -34,13 +36,18 @@ export default function HubAdsView() {
   const [filterOrigin, setFilterOrigin] = useState<string>('all');
   const [filterScore, setFilterScore] = useState<string>('all');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [activeCollection, setActiveCollection] = useState<'swipes' | 'campaigns'>('swipes');
+  const [filterNiche, setFilterNiche] = useState('all');
+  const [filterGender, setFilterGender] = useState('all');
+  const [filterMarket, setFilterMarket] = useState('all');
+  const [filterProductType, setFilterProductType] = useState('all');
 
   // Mapeamento de contadores reais por trackingCode
   const realCounts = useMemo(() => {
     const map: Record<string, { leads: number; revenue: number }> = {};
     
     // Inicializa
-    creatives.forEach(c => {
+    creatives.filter(c => c.origin === 'own').forEach(c => {
       map[c.trackingCode] = { leads: 0, revenue: 0 };
     });
 
@@ -63,14 +70,20 @@ export default function HubAdsView() {
 
   // Filtragem dos criativos
   const filteredCreatives = useMemo(() => {
-    return creatives.filter(c => {
+    const collectionCreatives = creatives.filter(c => activeCollection === 'swipes' ? c.origin !== 'own' : c.origin === 'own');
+    return collectionCreatives.filter(c => {
       // Busca textual (título, headline, copy, tags)
       const textMatch = searchQuery.trim() === '' || 
         c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (c.headline || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (c.copyText || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        c.trackingCode.toLowerCase().includes(searchQuery.toLowerCase());
+        c.trackingCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.productName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.niche || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.audienceGender || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.market || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.sourceUrl || '').toLowerCase().includes(searchQuery.toLowerCase());
 
       // Filtro de plataforma
       const platformMatch = filterPlatform === 'all' || c.platform.includes(filterPlatform);
@@ -86,10 +99,17 @@ export default function HubAdsView() {
 
       // Filtro de score
       const scoreMatch = filterScore === 'all' || c.score === filterScore;
+      const nicheMatch = filterNiche === 'all' || c.niche === filterNiche;
+      const genderMatch = filterGender === 'all' || c.audienceGender === filterGender;
+      const marketMatch = filterMarket === 'all' || c.market === filterMarket;
+      const productTypeMatch = filterProductType === 'all' || (c.productType || 'unlinked') === filterProductType;
 
-      return textMatch && platformMatch && statusMatch && categoryMatch && originMatch && scoreMatch;
+      return textMatch && platformMatch && statusMatch && categoryMatch && originMatch && scoreMatch && nicheMatch && genderMatch && marketMatch && productTypeMatch;
     });
-  }, [creatives, searchQuery, filterPlatform, filterStatus, filterCategory, filterOrigin, filterScore]);
+  }, [creatives, activeCollection, searchQuery, filterPlatform, filterStatus, filterCategory, filterOrigin, filterScore, filterNiche, filterGender, filterMarket, filterProductType]);
+
+  const collectionCreatives = useMemo(() => creatives.filter(c => activeCollection === 'swipes' ? c.origin !== 'own' : c.origin === 'own'), [creatives, activeCollection]);
+  const uniqueValues = (key: 'niche' | 'audienceGender' | 'market') => [...new Set(collectionCreatives.map(c => c[key]?.trim()).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b));
 
   const handleOpenNew = () => {
     setSelectedCreative(null);
@@ -125,9 +145,13 @@ export default function HubAdsView() {
     setFilterCategory('all');
     setFilterOrigin('all');
     setFilterScore('all');
+    setFilterNiche('all');
+    setFilterGender('all');
+    setFilterMarket('all');
+    setFilterProductType('all');
   };
 
-  const hasActiveFilters = searchQuery !== '' || filterPlatform !== 'all' || filterStatus !== 'all' || filterCategory !== 'all' || filterOrigin !== 'all' || filterScore !== 'all';
+  const hasActiveFilters = searchQuery !== '' || filterPlatform !== 'all' || filterStatus !== 'all' || filterCategory !== 'all' || filterOrigin !== 'all' || filterScore !== 'all' || filterNiche !== 'all' || filterGender !== 'all' || filterMarket !== 'all' || filterProductType !== 'all';
 
   const isLoading = loadingCreatives || loadingLeads || loadingClients;
 
@@ -142,7 +166,7 @@ export default function HubAdsView() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white tracking-tight">HubAds</h1>
-              <p className="text-sm text-gray-400">Banco de Criativos, Referências & Rastreamento Financeiro de Tráfego Pago</p>
+              <p className="text-sm text-gray-400">Referências pesquisáveis e criativos da operação, conectados aos produtos.</p>
             </div>
           </div>
         </div>
@@ -152,12 +176,17 @@ export default function HubAdsView() {
           className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 shadow-lg shadow-primary-500/20 hover:scale-[1.02]"
         >
           <Plus className="w-5 h-5" />
-          Novo Criativo
+          {activeCollection === 'swipes' ? 'Guardar referência' : 'Novo anúncio'}
         </button>
       </div>
 
+      <div className="flex gap-2 border-b border-white/10">
+        <button type="button" onClick={() => setActiveCollection('swipes')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${activeCollection === 'swipes' ? 'border-primary-400 text-primary-300' : 'border-transparent text-gray-400 hover:text-white'}`}>Swipe File <span className="ml-1 text-xs opacity-70">({creatives.filter(c => c.origin !== 'own').length})</span></button>
+        <button type="button" onClick={() => setActiveCollection('campaigns')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${activeCollection === 'campaigns' ? 'border-primary-400 text-primary-300' : 'border-transparent text-gray-400 hover:text-white'}`}>Anúncios da operação <span className="ml-1 text-xs opacity-70">({creatives.filter(c => c.origin === 'own').length})</span></button>
+      </div>
+
       {/* Estatísticas Globais */}
-      <HubAdsStats creatives={creatives} leads={leads} clients={clients} />
+      {activeCollection === 'campaigns' && <HubAdsStats creatives={collectionCreatives} leads={leads} clients={clients} />}
 
       {/* Barra de Filtros */}
       <div className="bg-[#0b0e14]/40 border border-white/10 rounded-2xl p-4 space-y-3 shadow-md">
@@ -169,7 +198,7 @@ export default function HubAdsView() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por título, headline, copy, tags ou código..."
+              placeholder={activeCollection === 'swipes' ? 'Buscar por texto, produto, nicho, público, mercado, tags ou link...' : 'Buscar por título, headline, copy, produto, tags ou código...'}
               className="w-full pl-11 pr-4 py-2.5 bg-[#0d1117]/60 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary-500/50 transition-colors"
             />
           </div>
@@ -243,8 +272,14 @@ export default function HubAdsView() {
         </div>
 
         {/* Filtros Avançados (Expansível) */}
-        {(showAdvancedFilters || filterOrigin !== 'all' || filterScore !== 'all') && (
+        {(activeCollection === 'swipes' || showAdvancedFilters || filterOrigin !== 'all' || filterScore !== 'all') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-3 border-t border-white/5 flex-wrap">
+            {activeCollection === 'swipes' && <>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Nicho<select value={filterNiche} onChange={event => setFilterNiche(event.target.value)} className="mt-1.5 w-full px-3 py-2 bg-[#0d1117]/60 border border-white/10 rounded-xl text-xs text-white"><option value="all">Todos os nichos</option>{uniqueValues('niche').map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Gênero / público<select value={filterGender} onChange={event => setFilterGender(event.target.value)} className="mt-1.5 w-full px-3 py-2 bg-[#0d1117]/60 border border-white/10 rounded-xl text-xs text-white"><option value="all">Todos os públicos</option>{uniqueValues('audienceGender').map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Mercado<select value={filterMarket} onChange={event => setFilterMarket(event.target.value)} className="mt-1.5 w-full px-3 py-2 bg-[#0d1117]/60 border border-white/10 rounded-xl text-xs text-white"><option value="all">Todos os mercados</option>{uniqueValues('market').map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tipo de produto<select value={filterProductType} onChange={event => setFilterProductType(event.target.value)} className="mt-1.5 w-full px-3 py-2 bg-[#0d1117]/60 border border-white/10 rounded-xl text-xs text-white"><option value="all">Todos os tipos</option><option value="own">Próprio</option><option value="affiliate">Afiliado</option><option value="unlinked">Referência geral</option></select></label>
+            </>}
             <div>
               <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Origem da Peça</label>
               <select
@@ -305,7 +340,7 @@ export default function HubAdsView() {
           <p className="text-sm text-gray-400 mb-6">
             {hasActiveFilters 
               ? 'Tente ajustar ou limpar os filtros de busca para encontrar o que procura.' 
-              : 'Comece cadastrando criativos próprios ou referências de concorrentes clicando no botão "Novo Criativo".'
+              : activeCollection === 'swipes' ? 'Guarde referências de qualquer canal e classifique-as por produto, nicho, público e mercado.' : 'Cadastre anúncios da operação e acompanhe os criativos ativos e pausados.'
             }
           </p>
           {hasActiveFilters ? (
@@ -321,7 +356,7 @@ export default function HubAdsView() {
               className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold flex items-center gap-2 transition-colors shadow-lg"
             >
               <Plus className="w-4 h-4" />
-              Cadastrar Primeiro Criativo
+              {activeCollection === 'swipes' ? 'Guardar primeira referência' : 'Criar primeiro anúncio'}
             </button>
           )}
         </div>
@@ -334,6 +369,8 @@ export default function HubAdsView() {
         onSave={handleSave}
         onDelete={handleDelete}
         creative={selectedCreative}
+        defaultOrigin={activeCollection === 'swipes' ? 'inspiration' : 'own'}
+        products={products.map(product => ({ id: product.id, name: product.name }))}
       />
     </div>
   );

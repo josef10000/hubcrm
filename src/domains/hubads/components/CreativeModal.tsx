@@ -13,11 +13,13 @@ interface CreativeModalProps {
   onSave: (data: any) => Promise<void>;
   onDelete?: () => Promise<void>;
   creative?: CreativeEntity | null; // se presente, é modo de edição
+  defaultOrigin?: CreativeEntity['origin'];
+  products?: Array<{ id: string; name: string }>;
 }
 
 type TabType = 'creative' | 'campaign' | 'performance';
 
-export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: CreativeModalProps) {
+export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative, defaultOrigin = 'own', products = [] }: CreativeModalProps) {
   const { confirm } = useDialog();
   const [activeTab, setActiveTab] = useState<TabType>('creative');
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,13 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
   const [ctaText, setCtaText] = useState('');
   const [tagsInput, setTagsInput] = useState('');
   const [campaignName, setCampaignName] = useState('');
+  const [productId, setProductId] = useState('');
+  const [productName, setProductName] = useState('');
+  const [productType, setProductType] = useState<'own' | 'affiliate' | 'unlinked'>('unlinked');
+  const [niche, setNiche] = useState('');
+  const [audienceGender, setAudienceGender] = useState('');
+  const [market, setMarket] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('');
   
   // Performance states
   const [investment, setInvestment] = useState(0);
@@ -67,6 +76,13 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
         setCtaText(creative.ctaText || '');
         setTagsInput(creative.tags ? creative.tags.join(', ') : '');
         setCampaignName(creative.campaignName || '');
+        setProductId(creative.productId || '');
+        setProductName(creative.productName || '');
+        setProductType(creative.productType || 'unlinked');
+        setNiche(creative.niche || '');
+        setAudienceGender(creative.audienceGender || '');
+        setMarket(creative.market || '');
+        setSourceUrl(creative.sourceUrl || '');
         setInvestment(creative.investment || 0);
         setImpressions(creative.impressions || 0);
         setClicks(creative.clicks || 0);
@@ -81,7 +97,7 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
         setCategory('full_ad');
         setPlatform([]);
         setStatus('draft');
-        setOrigin('own');
+        setOrigin(defaultOrigin);
         setMediaUrls([]);
         setMediaInput('');
         setHeadline('');
@@ -89,6 +105,13 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
         setCtaText('');
         setTagsInput('');
         setCampaignName('');
+        setProductId('');
+        setProductName('');
+        setProductType(defaultOrigin === 'own' ? 'own' : 'unlinked');
+        setNiche('');
+        setAudienceGender('');
+        setMarket('');
+        setSourceUrl('');
         setInvestment(0);
         setImpressions(0);
         setClicks(0);
@@ -98,7 +121,11 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
         setNotes('');
       }
     }
-  }, [isOpen, creative]);
+  }, [isOpen, creative, defaultOrigin]);
+
+  useEffect(() => {
+    if (origin !== 'own' && activeTab === 'performance') setActiveTab('campaign');
+  }, [origin, activeTab]);
 
   if (!isOpen) return null;
 
@@ -170,6 +197,13 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
       ctaText,
       tags,
       campaignName,
+      productId,
+      productName,
+      productType,
+      niche,
+      audienceGender,
+      market,
+      sourceUrl,
       investment: Number(investment) || 0,
       impressions: Number(impressions) || 0,
       clicks: Number(clicks) || 0,
@@ -231,12 +265,12 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
         <div className="p-5 border-b border-white/10 flex justify-between items-center bg-[#0d1117]">
           <div>
             <h3 className="text-xl font-bold text-white">
-              {creative ? 'Editar Criativo' : 'Novo Criativo'}
+              {creative ? creative.origin === 'own' ? 'Editar Anúncio' : 'Editar Referência' : defaultOrigin === 'own' ? 'Novo Anúncio' : 'Guardar referência'}
             </h3>
             <p className="text-xs text-gray-400 mt-1">
               {creative 
-                ? `Código de Rastreamento: ${creative.trackingCode}` 
-                : 'Defina mídias, campanhas e resultados financeiros'
+                ? creative.origin === 'own' ? `Código de Rastreamento: ${creative.trackingCode}` : 'Organize esta referência para encontrá-la quando precisar.'
+                : defaultOrigin === 'own' ? 'Defina mídias, campanhas e resultados financeiros' : 'Guarde e classifique esta referência para encontrar depois.'
               }
             </p>
           </div>
@@ -270,9 +304,9 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
             }`}
           >
             <Globe className="w-4 h-4" />
-            Campanha & Status
+            Classificação & Produto
           </button>
-          <button
+          {origin === 'own' && <button
             onClick={() => setActiveTab('performance')}
             className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-all flex items-center justify-center gap-2 ${
               activeTab === 'performance' 
@@ -282,7 +316,7 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
           >
             <Calculator className="w-4 h-4" />
             Performance Financeira
-          </button>
+          </button>}
         </div>
 
         {/* Form Body */}
@@ -450,6 +484,39 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
           {/* ABA 2 — CAMPANHA */}
           {activeTab === 'campaign' && (
             <div className="space-y-6">
+              <section className="rounded-2xl border border-white/10 bg-[#0b1017] p-5 space-y-4">
+                <div>
+                  <h4 className="text-sm font-bold text-white">Organização do Swipe File</h4>
+                  <p className="text-xs text-gray-500 mt-1">Esses campos ajudam a encontrar esta referência por produto, público e mercado.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <label className="text-xs font-semibold text-gray-400">Tipo de produto
+                    <select value={productType} onChange={event => { const value = event.target.value as typeof productType; setProductType(value); if (value !== 'own') setProductId(''); }} className="mt-2 w-full px-3 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white">
+                      <option value="unlinked">Referência geral</option><option value="own">Produto próprio</option><option value="affiliate">Produto afiliado</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-gray-400">Vincular ao catálogo (opcional)
+                    <select value={productId} onChange={event => { const id = event.target.value; setProductId(id); if (id) { setProductType('own'); setProductName(products.find(product => product.id === id)?.name ?? productName); } }} className="mt-2 w-full px-3 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white">
+                      <option value="">Sem vínculo no catálogo</option>{products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-gray-400">Nome do produto
+                    <input value={productName} onChange={event => setProductName(event.target.value)} placeholder={productType === 'affiliate' ? 'Nome do produto afiliado' : 'Produto relacionado'} className="mt-2 w-full px-3 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white" />
+                  </label>
+                  <label className="text-xs font-semibold text-gray-400">Nicho
+                    <input value={niche} onChange={event => setNiche(event.target.value)} placeholder="Ex.: finanças pessoais" className="mt-2 w-full px-3 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white" />
+                  </label>
+                  <label className="text-xs font-semibold text-gray-400">Gênero / perfil de público
+                    <input value={audienceGender} onChange={event => setAudienceGender(event.target.value)} placeholder="Ex.: feminino, masculino, unissex" className="mt-2 w-full px-3 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white" />
+                  </label>
+                  <label className="text-xs font-semibold text-gray-400">Mercado ou região
+                    <input value={market} onChange={event => setMarket(event.target.value)} placeholder="Ex.: Brasil, Portugal, LATAM" className="mt-2 w-full px-3 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white" />
+                  </label>
+                  <label className="md:col-span-3 text-xs font-semibold text-gray-400">Link da referência
+                    <input type="url" value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} placeholder="Cole o link do anúncio, publicação ou página original" className="mt-2 w-full px-3 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white" />
+                  </label>
+                </div>
+              </section>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Plataformas */}
                 <div>
@@ -510,7 +577,7 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Origem da Peça</label>
                   <select
                     value={origin}
-                    onChange={(e: any) => setOrigin(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setOrigin(e.target.value as typeof origin)}
                     className="w-full px-4 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary-500 transition-colors"
                   >
                     <option value="own">Produção Própria</option>
@@ -533,13 +600,13 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
               </div>
 
               {/* Informação sobre o Código de Rastreamento */}
-              <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex items-start gap-3">
+              {origin === 'own' && <div className="p-4 bg-slate-900/60 border border-white/5 rounded-2xl flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="text-xs text-gray-400 leading-relaxed">
                   <span className="font-semibold text-white block mb-1">Uso do Código de Rastreamento:</span>
                   O código sequencial gerado pelo sistema (ex: <span className="font-mono text-white">HUBADS-002</span>) deve ser utilizado como a origem de leads (URL UTM ou entrada no cadastro de Leads no CRM). Ao fazer isso, o faturamento e leads vinculados a este criativo serão contabilizados em tempo real no dashboard.
                 </div>
-              </div>
+              </div>}
             </div>
           )}
 
@@ -674,7 +741,7 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
                   className="px-4 py-2.5 bg-red-600/10 hover:bg-red-600 border border-red-600/20 hover:border-red-600/40 text-red-500 hover:text-white rounded-xl font-semibold transition-all flex items-center gap-1.5 text-xs"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Excluir Criativo
+                  {creative.origin === 'own' ? 'Excluir anúncio' : 'Excluir referência'}
                 </button>
               )}
             </div>
@@ -691,7 +758,7 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
                 disabled={loading}
                 className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white rounded-xl font-semibold flex items-center gap-1.5 transition-colors shadow-lg shadow-primary-500/20 text-xs"
               >
-                {loading ? 'Salvando...' : 'Salvar Criativo'}
+                {loading ? 'Salvando...' : origin === 'own' ? 'Salvar anúncio' : 'Salvar referência'}
               </button>
             </div>
           </div>

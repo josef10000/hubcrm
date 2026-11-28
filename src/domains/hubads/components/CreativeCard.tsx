@@ -156,9 +156,15 @@ export function CreativeCard({ creative, realLeadsCount, realRevenueCount, onCli
               "{creative.headline}"
             </p>
           )}
+          {(creative.productName || creative.niche || creative.market || creative.audienceGender) && <div className="flex flex-wrap gap-1.5 mb-3">
+            {creative.productName && <span className="px-2 py-1 rounded-md border border-primary-500/20 bg-primary-500/10 text-[9px] text-primary-300">{creative.productName}</span>}
+            {creative.niche && <span className="px-2 py-1 rounded-md border border-white/10 bg-white/5 text-[9px] text-gray-300">{creative.niche}</span>}
+            {creative.audienceGender && <span className="px-2 py-1 rounded-md border border-white/10 bg-white/5 text-[9px] text-gray-300">{creative.audienceGender}</span>}
+            {creative.market && <span className="px-2 py-1 rounded-md border border-white/10 bg-white/5 text-[9px] text-gray-300">{creative.market}</span>}
+          </div>}
           
           {/* Código de rastreamento com cópia rápida */}
-          <div className="flex items-center justify-between gap-2 mb-3 bg-slate-900/40 border border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-400">
+          {creative.origin === 'own' && <div className="flex items-center justify-between gap-2 mb-3 bg-slate-900/40 border border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-400">
             <span className="font-mono text-[10px] font-semibold text-slate-300">
               {creative.trackingCode}
             </span>
@@ -173,7 +179,7 @@ export function CreativeCard({ creative, realLeadsCount, realRevenueCount, onCli
                 <Copy className="w-3.5 h-3.5" />
               )}
             </button>
-          </div>
+          </div>}
         </div>
 
         {/* Plataformas e Rodapé */}
@@ -195,10 +201,13 @@ export function CreativeCard({ creative, realLeadsCount, realRevenueCount, onCli
             )}
           </div>
 
-          <div className="h-[1px] bg-white/5 my-3" />
+          {creative.origin !== 'own' ? <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-400">
+            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-1">{creative.productType === 'affiliate' ? 'Produto afiliado' : creative.productType === 'own' ? 'Produto próprio' : 'Referência geral'}</span>
+            {creative.sourceUrl && <a href={creative.sourceUrl} target="_blank" rel="noreferrer" onClick={event => event.stopPropagation()} className="inline-flex items-center gap-1 text-primary-300 hover:text-primary-200"><ExternalLink className="w-3 h-3"/>Abrir original</a>}
+          </div> : <div className="h-[1px] bg-white/5 my-3" />}
 
           {/* Grid de Mini-Métricas */}
-          <div className="grid grid-cols-2 gap-2 text-left">
+          {creative.origin === 'own' && <div className="grid grid-cols-2 gap-2 text-left">
             <div>
               <span className="text-[9px] text-gray-500 block">Investido</span>
               <span className="text-xs font-semibold text-white font-mono">{formatCurrency(creative.investment)}</span>
@@ -217,7 +226,7 @@ export function CreativeCard({ creative, realLeadsCount, realRevenueCount, onCli
                 {roas.toFixed(2)}x
               </span>
             </div>
-          </div>
+          </div>}
         </div>
       </div>
     </div>

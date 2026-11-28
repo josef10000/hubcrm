@@ -845,3 +845,10 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Histórico**: nenhuma coleção ou documento de perfil, ponto, folha, contrato ou RH é excluída. O modo afeta exibição e automações da interface; volta a expor os recursos ao mudar para equipe.
 - **Financeiro real**: resumo e DRE passam a considerar receitas e despesas com status `PAID`; DRE usa `paymentDate || date`. A DRE não infere folha de perfis nem projeta impostos estimados; taxas de gateway registradas e demais transações reais permanecem. Painéis de folha continuam disponíveis apenas no modo equipe.
 - **Foco de produto**: painel executivo prioriza receitas pagas do mês e do dia; no financeiro solo, o resumo troca análise de margem por cliente pelo resultado global. Recursos comerciais B2B continuam no código e reaparecem no modo equipe.
+
+## 52. Swipe File do HubAds e controles do Hub Office
+
+- **Data**: 28/11/2026.
+- **HubAds**: a tela tem duas coleções: Swipe File para referências externas/concorrentes e Anúncios da operação para criativos próprios. As métricas agregadas e o rastreamento do CRM são restritos aos anúncios próprios.
+- **Referências pesquisáveis**: cada registro pode guardar relação opcional com produto do catálogo, nome livre de produto afiliado, tipo de produto, nicho, perfil de público, mercado/região e URL original. Busca textual cobre metadados, tags, conteúdo e URL; filtros facetados por nicho, público, mercado e tipo são montados a partir dos registros da coleção.
+- **Hub Office**: em tela cheia, controles de operação, andar, grade e rotação ficam recolhidos; a faixa superior revela o menu ao aproximar o mouse, com botão acessível para alternar a visibilidade. O conteúdo do escritório segue ocupando a tela sem a barra obstruindo monitores.
