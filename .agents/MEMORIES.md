@@ -821,8 +821,8 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 ## 49. Salas de operação e monitoramento do Hub Office
 
 - **Data**: 28/11/2026.
-- **Salas por operação**: tipos “Operação de produto”, “Sala de nicho” e “Sala de blog/canal” disponíveis no editor de espaços. Criar uma sala ou andar cria personagens locais distintos; migração v5 preenche espaços antigos sem equipe.
+- **Salas por operação**: tipos “Operação de produto”, “Sala de nicho” e “Sala de blog/canal” disponíveis no editor de espaços. Ao criar ou renomear uma oferta/produto no CRM ou um ICP/nicho, uma fila local cria ou atualiza a sala correspondente no Office; um personagem distinto entra nela. Criar sala manualmente ou andar também gera personagens. Migração v5 preenche espaços antigos sem equipe. A configuração continua local por usuário.
 - **Simulação**: começa ativa por padrão após carregar o Office. Em intervalos mais longos, agentes alternam trabalho, pausa e revisão e caminham para outras salas do mesmo andar; posições em trânsito são temporárias e não alteram o posto salvo.
 - **Movimento**: percursos visuais maiores ao redor das mesas e transição entre espaços. Móveis continuam fixos enquanto sprites caminham.
 - **Monitoramento**: tela cheia tem três modos: foco em uma sala, grade de todas as salas do prédio com acesso por clique, e alternância automática de sala a cada 12 segundos. A simulação pode ser pausada ou retomada na barra de tela cheia.
-- **Limite atual**: os tipos de sala e personagens são preparados manualmente no Hub Office. Criação de produtos, nichos ou blogs em outros módulos ainda não sincroniza salas automaticamente; o Office segue local e simulado, sem VPS, métricas ou agentes reais.
+- **Limite atual**: sala de blog/canal é criada manualmente porque o Hub hoje cadastra artigos, não blogs/canais como entidades. O Office segue local e simulado, sem VPS, métricas ou agentes reais.

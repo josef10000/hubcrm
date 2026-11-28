@@ -3,6 +3,7 @@ import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Offer } from '@/types';
 import { toast } from 'sonner';
+import { queueOfficeRoomSync } from '@/domains/nexus/officeRoomSync';
 
 export function useOffers(userId: string, offers: Offer[], setOffers: React.Dispatch<React.SetStateAction<Offer[]>>) {
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
@@ -58,6 +59,7 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
       }
 
       await setDoc(offerRef, offerToSave);
+      queueOfficeRoomSync(auth.currentUser?.uid, { kind: 'product', sourceId: offerId, name: offerToSave.name });
       toast.success(isNew ? 'Oferta criada com sucesso!' : 'Oferta atualizada com sucesso!');
       setIsOfferModalOpen(false);
     } catch (error: any) {

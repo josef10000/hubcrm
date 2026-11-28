@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { collection, doc, getDocs, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { ICP } from '@/types';
 import { toast } from 'sonner';
+import { queueOfficeRoomSync } from '@/domains/nexus/officeRoomSync';
 
 export function useICPs() {
   const { effectiveOrgId } = useCRM();
@@ -55,6 +56,7 @@ export function useICPs() {
       };
 
       await setDoc(docRef, payload, { merge: true });
+      queueOfficeRoomSync(auth.currentUser?.uid, { kind: 'niche', sourceId: id, name: payload.niche || payload.name });
       return payload;
     },
     onSuccess: () => {

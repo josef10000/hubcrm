@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { agentPose, HabblaudCharacter } from '../officeArt/HabblaudCharacter';
+import { consumeOfficeRoomSync, getOfficeRoomSyncEventName } from '../officeRoomSync';
 import './AgentOfficeView.css';
 
 type AgentStatus = 'idle' | 'working' | 'review';
@@ -36,6 +37,8 @@ interface OfficeArea {
   y: number;
   color: string;
   kind?: OfficeRoomKind;
+  syncedKind?: 'product' | 'niche';
+  sourceId?: string;
 }
 
 interface OfficeFloor {
@@ -435,6 +438,41 @@ export default function AgentOfficeView() {
   useEffect(() => {
     if (loaded) localStorage.setItem(storageKey, JSON.stringify({ agents, floors, activeFloorId, eventSettings }));
   }, [agents, floors, activeFloorId, eventSettings, loaded, storageKey]);
+
+  useEffect(() => {
+    if (!loaded || !user?.uid) return;
+    const applyQueuedRooms = () => {
+      const requests = consumeOfficeRoomSync(user.uid);
+      if (!requests.length) return;
+      const updatedFloors = floors.map(floor => ({ ...floor, areas: [...floor.areas] }));
+      for (const request of requests) {
+        const existing = updatedFloors.flatMap(floor => floor.areas.map(area => ({ floor, area }))).find(({ area }) => area.syncedKind === request.kind && area.sourceId === request.sourceId);
+        if (existing) {
+          existing.area.name = request.name.slice(0, 32);
+          continue;
+        }
+        const floor = updatedFloors.find(item => item.id === MAIN_FLOOR_ID) ?? updatedFloors[0];
+        if (!floor) continue;
+        const index = floor.areas.length;
+        const locations = [{ x: 48, y: 41 }, { x: 52, y: 70 }, { x: 34, y: 56 }, { x: 67, y: 54 }, { x: 50, y: 79 }];
+        const position = locations[index % locations.length];
+        const area: OfficeArea = { id: `${request.kind}-${crypto.randomUUID()}`, name: request.name.slice(0, 32), ...position, color: request.kind === 'product' ? '#78b9e8' : '#c59be8', kind: request.kind, syncedKind: request.kind, sourceId: request.sourceId };
+        floor.areas.push(area);
+      }
+      setFloors(updatedFloors);
+      setAgents(current => ensureRoomAgents(updatedFloors, current).map(agent => {
+        const area = updatedFloors.find(floor => floor.id === agent.floorId)?.areas.find(item => item.id === agent.areaId);
+        return area?.syncedKind ? { ...agent, role: roomKinds.find(item => item.id === area.kind)?.label ?? agent.role, task: roomTask(area.syncedKind, area.name) } : agent;
+      }));
+    };
+    applyQueuedRooms();
+    const eventName = getOfficeRoomSyncEventName();
+    const onSync = () => applyQueuedRooms();
+    const onStorage = (event: StorageEvent) => { if (event.key?.endsWith(`:${user.uid}`)) applyQueuedRooms(); };
+    window.addEventListener(eventName, onSync);
+    window.addEventListener('storage', onStorage);
+    return () => { window.removeEventListener(eventName, onSync); window.removeEventListener('storage', onStorage); };
+  }, [loaded, user?.uid, floors]);
 
   useEffect(() => {
     if (!simulation || !loaded) return;
