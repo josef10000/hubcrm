@@ -808,3 +808,12 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Reunião simulada**: o andar principal começa com uma sala de reunião, mesa compartilhada e escada. “Chamar reunião” reúne todos os agentes na sala do andar atual por 14 segundos; sprites já nesse andar caminham dos postos, e os dos outros andares chegam pela escada, enquanto mesas/computadores ficam presos aos postos originais. Status e feed indicam que é uma demonstração local.
 - **Metas e temas**: regras locais editáveis para vendas e lucro diário, com opção de novas metas; temas sazonais repetem por mês/dia todos os anos. O botão de demonstração ativa uma celebração até a meia-noite local, que sobrepõe o tema sazonal e depois o libera.
 - **Limite atual**: contadores comerciais, gatilhos automáticos por vendas/lucro, presença de VPS, rotas entre andares e eventos reais de agentes ainda não estão conectados. Configurações persistem no navegador e permitem validar a experiência visual antes dessa integração. Avatar de agente novo recebe semente aleatória ampla e cor de roupa sorteada.
+
+## 48. Refinamento de Temas, Móveis e Reuniões do Hub Office
+
+- **Data**: 28/11/2026.
+- **Migração v4**: versão local passou para v4, migrando os formatos v3, v2 e o legado v1. A migração preserva posições já salvas, completa uma vez a mobília base que antes era fixa e ativa o calendário de Natal que anteriormente vinha desabilitado por padrão.
+- **Móveis arrastáveis**: sofá, mesas, plantas, estante, quadro, cadeiras e escadas agora são objetos persistidos por andar. A ação “Mover móveis” habilita arraste no mapa; soltar grava as coordenadas. Editor continua aceitando X/Y/tamanho.
+- **Natal e sazonalidade**: calendário anual ativável, prévia “Ver tema agora” até a meia-noite, fios de luzes coloridas, detalhes em vermelho/branco, piso e tapetes festivos. Desativar o tema sazonal remove o visual e a prévia imediatamente.
+- **Metas**: a comemoração guarda o ID da meta que a iniciou. Desativar ou remover a meta encerra sua comemoração; dados antigos são normalizados na abertura para limpar celebrações vinculadas a metas inativas.
+- **Reuniões**: assentos de cadeira aparecem em torno da mesa para os participantes. Os sprites caminham até lugares distintos e adotam a pose sentada ao chegar, sem levar móveis junto.
