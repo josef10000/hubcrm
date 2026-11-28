@@ -205,7 +205,31 @@
 .office-divider-vertical { top:17%; bottom:13%; left:50%; width:2px; }
 .office-zone { position:absolute; z-index:2; display:flex; align-items:center; gap:6px; padding:4px 8px 4px 4px; border:1px solid color-mix(in srgb,var(--area-accent) 47%,transparent); border-radius:9px; color:rgba(74,69,52,.88); background:color-mix(in srgb,var(--area-accent) 16%,rgba(255,245,221,.76)); box-shadow:0 3px 9px rgba(68,48,25,.1); font-size:clamp(8px,.9vw,11px); font-weight:820; letter-spacing:.07em; text-transform:uppercase; pointer-events:none; white-space:nowrap; }
 .office-zone span { display:grid; width:18px; height:18px; place-items:center; border:1px solid color-mix(in srgb,var(--area-accent) 58%,#876142); border-radius:6px; color:#574832; background:var(--area-accent); box-shadow:0 2px 4px #5b40221c; font-size:8px; }
+.office-zone small { display:none; color:#6c6656; font-size:7px; letter-spacing:.02em; text-transform:none; }
+.office-zone.room-meeting,.office-zone.room-presentation { border-style:double; }
+.office-zone.room-lounge { background:color-mix(in srgb,#b96e61 18%,rgba(255,245,221,.76)); }
+.office-zone.room-game { background:color-mix(in srgb,#a695dc 20%,rgba(255,245,221,.76)); }
+.office-room-boundary { position:absolute;z-index:1;width:24%;height:28%;border:2px solid color-mix(in srgb,var(--area-accent) 55%,rgba(255,248,226,.55));border-radius:8px;background:linear-gradient(135deg,color-mix(in srgb,var(--area-accent) 5%,transparent),color-mix(in srgb,var(--area-accent) 9%,transparent));box-shadow:inset 0 0 0 2px rgba(255,245,220,.26),0 3px 8px rgba(77,53,31,.08);transform:translate(-50%,-50%);pointer-events:none; }
+.office-room-boundary::after { content:'';position:absolute;right:13%;bottom:-2px;width:15%;height:22%;border:2px solid color-mix(in srgb,var(--area-accent) 55%,rgba(255,248,226,.55));border-bottom:0;border-radius:8px 8px 0 0;background:rgba(236,220,188,.35); }
+.office-room-boundary.room-meeting,.office-room-boundary.room-presentation { border-color:rgba(166,201,204,.83);background:linear-gradient(135deg,rgba(211,237,231,.19),rgba(163,211,204,.11));box-shadow:inset 0 0 0 2px rgba(240,254,245,.48),0 4px 11px rgba(61,102,97,.12); }
+.office-room-boundary.room-meeting::before,.office-room-boundary.room-presentation::before { content:'';position:absolute;inset:5px;border:1px solid rgba(243,255,250,.52);border-radius:4px; }
+.office-room-boundary.room-lounge { border-color:rgba(183,124,103,.68);background:rgba(232,185,148,.12); }
+.office-room-boundary.room-game { border-color:rgba(155,133,207,.75);background:rgba(170,147,224,.15); }
 .office-furniture,.office-plant { position:absolute; z-index:3; pointer-events:none; }
+.office-custom-prop { position:absolute;z-index:3;display:grid;place-items:center;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 5px 3px rgba(64,47,30,.22)); }
+.office-custom-prop img { display:block;width:100%;height:auto;max-height:140px;object-fit:contain;image-rendering:pixelated; }
+.office-stairs-art { display:grid;min-width:52px;min-height:38px;place-items:center;border:3px solid #77513d;border-radius:7px;color:#584233;background:repeating-linear-gradient(180deg,#c99863 0 5px,#966744 5px 8px);font-size:20px;font-weight:900;box-shadow:0 4px 7px #533a2840; }
+.office-stairs-art small { color:#fff0d6;font-size:5px;letter-spacing:.08em; }
+.office-fixed-desk { position:absolute;z-index:3;display:flex;width:74px;height:40px;align-items:flex-start;justify-content:center;transform:translate(-50%,-32%);pointer-events:none; }
+.office-fixed-desk img:first-child { position:absolute;top:0;width:72px;image-rendering:pixelated;filter:drop-shadow(0 4px 2px #58402b35); }
+.office-fixed-desk img:nth-child(2) { position:absolute;z-index:1;top:-17px;left:27px;width:20px;height:38px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 1px #303b3b48); }
+.office-meeting-banner { position:absolute;z-index:20;top:70px;left:50%;display:flex;align-items:center;gap:7px;padding:6px 10px;border:1px solid rgba(112,175,158,.45);border-radius:9px;color:#f2fff8;background:rgba(35,104,88,.86);box-shadow:0 5px 15px rgba(40,63,50,.22);font-size:9px;font-weight:700;white-space:nowrap;transform:translateX(-50%); }
+.office-event-banner { position:absolute;z-index:20;top:14px;left:50%;display:flex;align-items:center;gap:9px;padding:8px 13px;border:1px solid rgba(255,255,255,.58);border-radius:13px;color:#fff8e8;background:linear-gradient(135deg,rgba(177,91,70,.94),rgba(119,61,92,.94));box-shadow:0 7px 24px #50352750;transform:translateX(-50%);animation:office-banner-in .45s cubic-bezier(.2,.8,.2,1) both; }
+.office-event-banner.is-season { background:linear-gradient(135deg,rgba(37,123,107,.94),rgba(56,85,139,.94)); }
+.office-event-banner span { display:grid;gap:2px;white-space:nowrap; }.office-event-banner strong {font-size:11px}.office-event-banner small {color:#ffebd8;font-size:8px}.office-event-banner.is-season small {color:#d8f3e9}
+.office-room.has-celebration::after { content:'';position:absolute;z-index:1;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 25%,rgba(255,221,126,.17),transparent 42%);animation:office-celebration-glow 1.8s ease-in-out infinite alternate; }
+@keyframes office-banner-in { from { opacity:0;translate:0 -12px; } to { opacity:1;translate:0 0; } }
+@keyframes office-celebration-glow { from { opacity:.35; } to { opacity:1; } }
 .office-furniture img,.office-plant img { display:block; image-rendering:pixelated; filter:drop-shadow(0 5px 3px rgba(64,47,30,.2)); }
 .office-sofa { left:41%; top:46%; }.office-sofa img { width:clamp(82px,10vw,126px); }
 .office-coffee { left:48%; top:35%; }.office-coffee img { width:clamp(32px,4.3vw,52px); }
@@ -272,10 +296,28 @@
 .office-space-list-heading { display:flex;align-items:center;justify-content:space-between;gap:12px; }
 .office-space-list-heading h3 { margin:0;color:#e6edf3;font-size:13px; }
 .office-space-list-heading p { margin:4px 0 0;color:#8e9baa;font-size:10px; }
+.office-room-kind { display:grid;gap:5px;color:#aeb9c5;font-size:9px;font-weight:620; }
+.office-room-kind select { max-width:155px;height:31px;padding:0 6px;border:1px solid rgba(205,222,236,.12);border-radius:7px;color:#e5edf3;background:#0e1926;font:inherit;font-size:9px; }
+.office-prop-editor-list { display:grid;gap:6px; }
+.office-prop-editor-row { display:grid;grid-template-columns:minmax(110px,1fr) 56px 56px 76px 30px;align-items:end;gap:7px;padding:8px;border:1px solid rgba(210,224,233,.075);border-radius:10px;background:rgba(255,255,255,.025); }
+.office-prop-editor-row strong { overflow:hidden;padding-bottom:9px;color:#dce5ed;font-size:10px;text-overflow:ellipsis;white-space:nowrap; }
+.office-prop-editor-row label { display:grid;gap:4px;color:#8d9aaa;font-size:8px; }
+.office-prop-editor-row input,.office-milestone-row input,.office-milestone-row select,.office-season-row input { min-width:0;height:30px;padding:0 7px;border:1px solid rgba(205,222,236,.12);border-radius:7px;color:#e5edf3;background:#0e1926;font:inherit;font-size:10px; }
+.office-prop-add-list { display:flex;flex-wrap:wrap;gap:6px; }
+.office-prop-add-list button { display:inline-flex;min-height:29px;align-items:center;gap:5px;padding:0 8px;border:1px dashed rgba(166,199,211,.2);border-radius:8px;color:#a8c7cb;background:rgba(255,255,255,.025);font:inherit;font-size:9px;cursor:pointer; }
+.office-prop-add-list button:hover { border-color:rgba(122,216,211,.4);background:rgba(70,179,168,.08); }
+.office-event-editor { width:min(100%,820px); }
+.office-event-section { display:grid;gap:9px;padding-top:6px;border-top:1px solid var(--office-line); }
+.office-milestone-row { display:grid;grid-template-columns:minmax(150px,1fr) 125px 90px auto auto 30px;align-items:center;gap:7px; }
+.office-milestone-row .office-preview-celebration { min-height:30px;padding:0 8px;font-size:9px; }
+.office-add-milestone { display:inline-flex;width:max-content;min-height:30px;align-items:center;gap:5px;padding:0 9px;border:1px dashed rgba(166,199,211,.2);border-radius:8px;color:#a8c7cb;background:rgba(255,255,255,.025);font:inherit;font-size:9px;cursor:pointer; }
+.office-switch { display:flex;align-items:center;gap:6px;color:#aeb9c5;font-size:9px;white-space:nowrap; }.office-switch input { accent-color:#62c6b0; }
+.office-season-row { display:grid;grid-template-columns:minmax(130px,1fr) 140px 140px auto;align-items:end;gap:9px; }
+.office-season-row > label:not(.office-switch) { display:grid;gap:5px;color:#aeb9c5;font-size:9px; }
 .office-delete-space { display:inline-flex;min-height:32px;align-items:center;gap:6px;padding:0 9px;border:1px solid rgba(242,127,127,.16);border-radius:8px;color:#d89595;background:rgba(199,72,72,.07);font:inherit;font-size:10px;cursor:pointer; }
 .office-delete-space:disabled,.office-remove-area:disabled { opacity:.35;cursor:not-allowed; }
 .office-area-editor-list { display:grid;gap:7px; }
-.office-area-editor-row { display:grid;grid-template-columns:26px minmax(80px,1fr) 57px 57px 32px 30px;align-items:end;gap:8px;padding:9px;border:1px solid rgba(210,224,233,.075);border-radius:11px;background:rgba(255,255,255,.025); }
+.office-area-editor-row { display:grid;grid-template-columns:26px minmax(80px,1fr) 150px 57px 57px 32px 30px;align-items:end;gap:8px;padding:9px;border:1px solid rgba(210,224,233,.075);border-radius:11px;background:rgba(255,255,255,.025); }
 .office-area-number { display:grid;width:24px;height:24px;place-items:center;margin-bottom:5px;border:1px solid color-mix(in srgb,var(--area-accent) 45%,transparent);border-radius:7px;color:#172a31;background:var(--area-accent);font-size:9px;font-weight:850; }
 .office-area-coordinate input { height:34px;text-align:center; }
 .office-area-color { display:grid;gap:5px;color:#8d9aaa;font-size:9px; }
@@ -283,6 +325,7 @@
 .office-remove-area { width:30px;height:30px;margin-bottom:1px;color:#cc8989; }
 .office-add-area-form { display:flex;gap:8px; }
 .office-add-area-form input { flex:1;height:37px; }
+.office-add-area-form select { min-width:160px;height:37px;padding:0 9px;border:1px solid rgba(205,222,236,.12);border-radius:8px;color:#e5edf3;background:#0e1926;font:inherit;font-size:10px; }
 .office-add-area-form .office-primary { min-height:37px; }
 .office-exit-fullscreen { position:absolute;z-index:25;top:17px;right:17px;display:grid;width:42px;height:42px;place-items:center;border:1px solid rgba(255,244,218,.35);border-radius:13px;color:#fff5df;background:rgba(37,48,46,.48);box-shadow:0 5px 18px rgba(32,28,20,.18);backdrop-filter:blur(6px);opacity:.16;transition:opacity .18s ease,transform .18s ease;cursor:pointer; }
 .office-room:hover .office-exit-fullscreen,.office-exit-fullscreen:focus-visible { opacity:1; }
@@ -327,15 +370,22 @@
   .office-map-actions { justify-content:flex-start; }
   .office-floor-select-label { flex:1; }
   .office-floor-select-label select { max-width:none;flex:1; }
-  .office-area-editor-row { grid-template-columns:22px minmax(56px,1fr) 39px 39px 28px 28px;gap:5px;padding:7px; }
+  .office-area-editor-row { grid-template-columns:22px minmax(56px,1fr) 1fr 39px 39px 28px 28px;gap:5px;padding:7px; }
+  .office-area-editor-row .office-room-kind { grid-column:2 / span 2;grid-row:2; }.office-area-editor-row .office-area-coordinate { min-width:0; }
+  .office-area-editor-row .office-area-color { grid-column:5;grid-row:1; }.office-area-editor-row .office-remove-area { grid-column:6;grid-row:1; }
   .office-area-coordinate input { height:32px;padding:0 3px; }
   .office-area-name input { height:32px;padding:0 5px; }
   .office-space-list-heading { align-items:flex-start;flex-direction:column; }
   .office-floor-tabs button.office-add-floor { margin-left:0; }
   .office-add-area-form { flex-wrap:wrap; }
+  .office-add-area-form select { flex:1; }
   .office-add-area-form .office-primary { flex:1; }
+  .office-prop-editor-row { grid-template-columns:1fr 43px 43px 60px 28px;gap:4px;padding:6px; }.office-prop-editor-row strong { grid-column:1 / -1;padding:0; }
+  .office-milestone-row { grid-template-columns:1fr auto auto; }.office-milestone-row > input:first-child { grid-column:1 / -1; }.office-milestone-row select { grid-column:1; }.office-milestone-row > label { grid-column:2; }.office-milestone-row .office-preview-celebration { grid-column:3;grid-row:2; }.office-season-row { grid-template-columns:1fr 1fr; }.office-season-row label:first-child { grid-column:1 / -1; }
+  .office-event-banner { top:10px;max-width:82%; }.office-event-banner strong {font-size:9px}.office-event-banner small {font-size:7px}
+  .office-meeting-banner { top:57px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .office-computer-on,.office-sprite-working,.office-window::after,.office-wall-lamp,.office-sunbeam-right,.office-plant { animation:none; }
+  .office-computer-on,.office-sprite-working,.office-window::after,.office-wall-lamp,.office-sunbeam-right,.office-plant,.office-event-banner,.office-room.has-celebration::after { animation:none; }
   .office-walker { will-change:auto; }
 }

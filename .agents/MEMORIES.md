@@ -798,3 +798,13 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Personagens**: renderizador procedural pixel art adaptado do Habblaud (`marmottajr/habblaud`, revisão `faa1a012b5fbf632c66dc6801c5383e53a542406`), sob MIT. O Hub monta aparências distintas localmente, com tons de pele, cabelo, roupa e acessórios, e anima poses de espera, caminhada, digitação e mão levantada. Licença e origem em `src/domains/nexus/officeArt/`.
 - **Andares e áreas**: versão de armazenamento local foi elevada a v2, com migração dos dados v1. Cada andar guarda áreas nomeadas, coloridas e posicionadas por coordenadas. É possível criar/renomear/excluir andares e áreas; agentes são movidos para um destino válido se o seu espaço for excluído.
 - **Tela cheia**: oculta o cabeçalho, controles, título, rodapé e barra lateral; o mapa ocupa a tela toda. Mantém apenas um botão discreto para sair, além do Escape do navegador.
+
+## 47. Prédio, Salas, Móveis e Celebrações do Hub Office
+
+- **Data**: 28/11/2026.
+- **Migração local**: armazenamento do Office passou de v2 para v3, preservando agentes, andares e áreas v2 e a migração histórica v1. A área antiga sem tipo é tratada como baia.
+- **Salas**: áreas agora têm tipo editável (baia, reunião, apresentação, descanso ou jogos), aparecem como salas no mapa e aceitam edição de nome, posição e cor. Agentes continuam atribuídos a uma sala por andar; excluir um espaço redireciona os agentes para um local válido.
+- **Móveis**: cada andar pode guardar móveis e acessos customizados (mesa individual/de reunião, sofá, planta e escada), com posição X/Y e tamanho ajustáveis. Móveis decorativos permanecem independentes dos sprites e dos postos dos agentes.
+- **Reunião simulada**: o andar principal começa com uma sala de reunião, mesa compartilhada e escada. “Chamar reunião” reúne todos os agentes na sala do andar atual por 14 segundos; sprites já nesse andar caminham dos postos, e os dos outros andares chegam pela escada, enquanto mesas/computadores ficam presos aos postos originais. Status e feed indicam que é uma demonstração local.
+- **Metas e temas**: regras locais editáveis para vendas e lucro diário, com opção de novas metas; temas sazonais repetem por mês/dia todos os anos. O botão de demonstração ativa uma celebração até a meia-noite local, que sobrepõe o tema sazonal e depois o libera.
+- **Limite atual**: contadores comerciais, gatilhos automáticos por vendas/lucro, presença de VPS, rotas entre andares e eventos reais de agentes ainda não estão conectados. Configurações persistem no navegador e permitem validar a experiência visual antes dessa integração. Avatar de agente novo recebe semente aleatória ampla e cor de roupa sorteada.
