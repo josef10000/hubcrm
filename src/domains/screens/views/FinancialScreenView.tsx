@@ -27,6 +27,12 @@ export default function FinancialScreenView() {
   const { effectiveOrgId } = useCRM();
   const { data: transactionsData = [] } = useTransactions();
   const { data: clientsData = [] } = useClients();
+  const [clockMinute, setClockMinute] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockMinute(minute => minute + 1), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // Meta diária de faturamento (Persistida no localStorage)
   const [dailyGoal, setDailyGoal] = useState<number>(() => {
@@ -47,7 +53,7 @@ export default function FinancialScreenView() {
     const end = new Date();
     end.setHours(23, 59, 59, 999);
     return { start: start.getTime(), end: end.getTime() };
-  }, []);
+  }, [clockMinute]);
 
   // Filtragem de Transações de Hoje
   const todayTransactions = useMemo(() => {

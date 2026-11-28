@@ -464,7 +464,11 @@ export default function AssetsPanel({ data, finance, month }: { data: Data; fina
           <span className="text-xs text-text-muted">Cache de 30 min · limite mensal protegido</span></div>
         <div className="mt-3 divide-y divide-text-muted/15">{quotedAssets.map(asset => {
           const result = asset.quotePriceCents && asset.quantity ? Math.round(asset.quotePriceCents * asset.quantity) : undefined;
-          const dayGain = result && asset.quoteChangePercent !== undefined ? result * asset.quoteChangePercent / 100 : undefined;
+          const dailyChange = asset.quoteChangePercent;
+          const previousValue = result !== undefined && dailyChange !== undefined && dailyChange > -100
+            ? result / (1 + dailyChange / 100)
+            : undefined;
+          const dayGain = result !== undefined && previousValue !== undefined ? result - previousValue : undefined;
           const costBasis = asset.averageCostCents && asset.quantity ? Math.round(asset.averageCostCents * asset.quantity) : undefined;
           const totalGain = result !== undefined && costBasis !== undefined ? result - costBasis : undefined;
           const updatedAt = asset.quoteUpdatedAt ? new Date(asset.quoteUpdatedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'Ainda sem cotação';

@@ -38,32 +38,28 @@ export async function handlePaymentReceived(doc: any, clientData: any, paymentDa
   await doc.ref.update(updates);
 
   // --- REGISTRO DE TRANSAÇÃO FINANCEIRA ---
-  try {
-    const orgId = doc.ref.parent.parent?.id;
-    if (orgId) {
-      const transactionId = `asaas_${paymentData.id}`;
-      const amount = paymentData.value || 0;
-      const netAmount = paymentData.netValue || amount;
-      const gatewayFee = Number((amount - netAmount).toFixed(2));
-      const pDesc = paymentData.description || 'Fatura Hub Symples';
+  const orgId = doc.ref.parent.parent?.id;
+  if (orgId) {
+    const transactionId = `asaas_${paymentData.id}`;
+    const amount = paymentData.value || 0;
+    const netAmount = paymentData.netValue || amount;
+    const gatewayFee = Number((amount - netAmount).toFixed(2));
+    const pDesc = paymentData.description || 'Fatura Hub Symples';
 
-      await db.collection(`organizations/${orgId}/transactions`).doc(transactionId).set({
-        id: transactionId,
-        description: pDesc || `Pagamento Asaas - ${clientData.name}`,
-        amount,
-        netAmount,
-        gatewayFee,
-        date: Date.now(),
-        paymentDate: Date.now(),
-        type: 'INCOME',
-        status: 'PAID',
-        clientId: doc.id,
-        paymentId: paymentData.id,
-        categoryName: 'Assinatura'
-      });
-    }
-  } catch (finErr) {
-    console.error('[FINANCE] Erro ao registrar transação:', finErr);
+    await db.collection(`organizations/${orgId}/transactions`).doc(transactionId).set({
+      id: transactionId,
+      description: pDesc || `Pagamento Asaas - ${clientData.name}`,
+      amount,
+      netAmount,
+      gatewayFee,
+      date: Date.now(),
+      paymentDate: Date.now(),
+      type: 'INCOME',
+      status: 'PAID',
+      clientId: doc.id,
+      paymentId: paymentData.id,
+      categoryName: 'Assinatura'
+    });
   }
 
   // --- ENVIO DE E-MAIL ---

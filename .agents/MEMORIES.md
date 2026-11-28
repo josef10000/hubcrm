@@ -860,3 +860,11 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Pausas**: na prévia temporária, personagens podem caminhar até salas de jogos, cozinha e descanso e mostrar atividades como sinuca, refeição e pausa. Se a operação não tiver uma área de convivência adequada, a atividade não é apresentada falsamente. O estado é apenas visual e será substituído por eventos reais dos agentes quando o runtime estiver conectado.
 - **Sincronização**: configuração do escritório (operações, andares, salas, móveis, agentes e temas) agora sincroniza em `organizations/{orgId}/agent_office/config`; estados da prévia e o feed local não são enviados. O `localStorage` é mantido como cópia local/fallback. A regra Firestore autoriza leitura e escrita a membros da organização.
 - **Estado de integração**: VPS, Telegram, voz e executores de agentes continuam desconectados; a interface identifica a atividade atual como demonstração temporária, sem apresentá-la como atividade real.
+
+## 54. Integridade financeira e reprocessamento do Asaas
+
+- **Data**: 28/11/2026.
+- **Webhook do Asaas**: eventos identificados passam por reserva com estado `processing`; eventos concluídos retornam como duplicados. Reservas com mais de cinco minutos podem ser retomadas, e falhas ficam marcadas `failed` para permitir reenvio do provedor. A conclusão só é gravada após o processamento, inclusive nos caminhos de evento ignorado. Eventos salvos no formato antigo (`processedAt`) continuam reconhecidos como concluídos. Falha ao gravar a transação do pagamento agora propaga erro para que o webhook possa ser repetido, usando o ID determinístico `asaas_{paymentId}`.
+- **Resultados**: despesas pendentes não reduzem o resultado realizado mostrado nos monitores do Office; apenas transações `PAID` contam no caixa realizado, alinhado ao Financeiro.
+- **TV financeira**: o intervalo de datas do dia atual é recalculado a cada minuto para que o painel aberto passe a exibir o novo dia sem recarregar a página.
+- **Investimentos**: a variação diária em reais deriva o valor de referência anterior da cotação atual e da variação percentual fornecida pela API; a variação segue indefinida quando o percentual não tem base válida.

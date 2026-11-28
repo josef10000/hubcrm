@@ -554,7 +554,7 @@ export default function AgentOfficeView() {
     const pendingTransactions = incomeTransactions.filter(transaction => String(transaction.status).toUpperCase() === 'PENDING');
     const income = paidTransactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
     const generatedIncome = incomeTransactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
-    const expenses = todayTransactions.filter(transaction => String(transaction.type).toUpperCase() === 'EXPENSE').reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+    const expenses = todayTransactions.filter(transaction => String(transaction.type).toUpperCase() === 'EXPENSE' && String(transaction.status).toUpperCase() === 'PAID').reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
     const completed = eventSettings.completedDate === todayKey ? eventSettings.simulatedCompleted ?? 0 : 0;
     return { sales: paidTransactions.length, income, generatedIncome, pendingSales: pendingTransactions.length, expenses, result: income - expenses, completed, reviews: reviewIds.size };
   }, [todayTransactions, eventSettings.completedDate, eventSettings.simulatedCompleted, todayKey, reviewIds]);
