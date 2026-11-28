@@ -5,6 +5,7 @@ import { useUI } from '@/contexts/UIContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useClients } from '@/hooks/queries/useClients';
 import { usePermissions } from '@auth/hooks/usePermissions';
+import { useOperatingMode } from '@/hooks/useOperatingMode';
 import { AppPermission } from '@/constants/permissions';
 import {
   Search,
@@ -51,6 +52,7 @@ interface CommandItem {
   shortcut: string;
   icon: React.ComponentType<any>;
   permission?: AppPermission;
+  teamOnly?: boolean;
 }
 
 export function CommandPalette() {
@@ -60,6 +62,7 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { hasPermission } = usePermissions();
+  const { isSolo, ready: operatingModeReady } = useOperatingMode();
   const { themeColor, setIsModalOpen } = useUI();
   const { setEditingClient } = useCRM();
   const { data: clients = [] } = useClients();
@@ -92,8 +95,8 @@ export function CommandPalette() {
     { id: 'cmd-monitoring', name: 'Automações & Monitoramento Uptime', description: 'Monitoramento nativo de servidores e sites', path: '/monitoring', shortcut: 'mo', icon: ShieldAlert },
     { id: 'cmd-map', name: 'Mapa de Clientes', description: 'Distribuição geográfica e localização de clientes', path: '/map', shortcut: 'ma', icon: Map },
     { id: 'cmd-billing', name: 'Cobrança & Asaas', description: 'Integrações financeiras, faturas Asaas e extrato', path: '/billing', shortcut: 'fa', icon: CreditCard, permission: 'MANAGE_FINANCE' },
-    { id: 'cmd-onboarding', name: 'Onboarding Hub', description: 'Gerenciador de formulários e recepção de clientes', path: '/onboarding-hub', shortcut: 'on', icon: ClipboardList },
-    { id: 'cmd-contracts', name: 'Contratos Digitais', description: 'Modelos de contratos ativos e assinaturas digitais', path: '/contracts', shortcut: 'co', icon: UserCheck, permission: 'MANAGE_FINANCE' },
+    { id: 'cmd-onboarding', name: 'Onboarding Hub', description: 'Gerenciador de formulários e recepção de clientes', path: '/onboarding-hub', shortcut: 'on', icon: ClipboardList, teamOnly: true },
+    { id: 'cmd-contracts', name: 'Contratos Digitais', description: 'Modelos de contratos ativos e assinaturas digitais', path: '/contracts', shortcut: 'co', icon: UserCheck, permission: 'MANAGE_FINANCE', teamOnly: true },
     { id: 'cmd-projects', name: 'Projetos & Engenharia', description: 'Acompanhamento de projetos e templates personalizados', path: '/projects', shortcut: 'pj', icon: LayoutTemplate },
     { id: 'cmd-analytics', name: 'Analytics de Vendas', description: 'Métricas de conversão e relatórios avançados', path: '/analytics', shortcut: 'an', icon: LineChart, permission: 'VIEW_REPORTS' },
     { id: 'cmd-finance', name: 'Financeiro Estratégico', description: 'Snapshot diário de DRE, fluxo de caixa e BI', path: '/finance', shortcut: 'gf', icon: DollarSign, permission: 'MANAGE_FINANCE' },
@@ -102,7 +105,7 @@ export function CommandPalette() {
     { id: 'cmd-canvas', name: 'Hub Canvas', description: 'Whiteboards interativos para brainstorming', path: '/canvas', shortcut: 'cv', icon: FolderGit2 },
     { id: 'cmd-wiki', name: 'Wiki & Memória', description: 'Base de conhecimento e segundo cérebro', path: '/wiki', shortcut: 'wi', icon: BookOpen },
     { id: 'cmd-settings', name: 'Configurações', description: 'Configurações gerais da conta e preferências', path: '/settings', shortcut: 'cf', icon: Settings },
-    { id: 'cmd-profile', name: 'Meu Perfil', description: 'Edição de dados pessoais e visualização de avatar', path: `/profile/${userProfile?.uid || 'me'}`, shortcut: 'pf', icon: User },
+    { id: 'cmd-profile', name: 'Meu Perfil', description: 'Edição de dados pessoais e visualização de avatar', path: `/profile/${userProfile?.uid || 'me'}`, shortcut: 'pf', icon: User, teamOnly: true },
     { id: 'cmd-workspace', name: 'Hub Office (Workspace)', description: 'Anotador, gestão e metas de consistência', path: '/workspace', shortcut: 'wo', icon: Sparkles }
   ], [userProfile?.uid]);
 
@@ -114,6 +117,7 @@ export function CommandPalette() {
       if (cmd.permission && !hasPermission(cmd.permission)) {
         return false;
       }
+      if (cmd.teamOnly && (!operatingModeReady || isSolo)) return false;
       if (!searchLower) return true;
       return (
         cmd.name.toLowerCase().includes(searchLower) ||
@@ -144,7 +148,7 @@ export function CommandPalette() {
       }));
 
     return [...matchingClients, ...matchingRoutes];
-  }, [search, allDestinations, clients, hasPermission, setEditingClient, setIsModalOpen]);
+  }, [search, allDestinations, clients, hasPermission, isSolo, operatingModeReady, setEditingClient, setIsModalOpen]);
 
   // Encontra a melhor sugestão para auto-complete
   const autocompleteSuggestion = useMemo(() => {

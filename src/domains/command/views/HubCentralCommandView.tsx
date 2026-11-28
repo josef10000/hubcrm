@@ -86,10 +86,17 @@ export default function HubCentralCommandView() {
     const overdueTransactions = validTransactions.filter(
       t => String(t.status || '').toUpperCase() === 'OVERDUE'
     );
+    const pendingFinanceCount = validTransactions.filter(t =>
+      ['PENDING', 'OVERDUE'].includes(String(t.status || '').toUpperCase())
+    ).length;
 
     const openTickets = (supportRequests || []).filter(
       (s: any) => s.status === 'aberto' || s.status === 'em_analise'
     );
+    const staleProjects = clientsList.filter(client => {
+      if (client.status !== 'Em Desenvolvimento' || !client.createdAt) return false;
+      return Date.now() - client.createdAt > 20 * 24 * 60 * 60 * 1000;
+    });
 
     const netEstimated = income - expense;
     const margin = income > 0 ? Math.round(((income - expense) / income) * 100) : 0;
@@ -98,7 +105,9 @@ export default function HubCentralCommandView() {
       activeCount: activeClients.length,
       totalClients: clientsList.length,
       overdueCount: overdueClients.length + overdueTransactions.length,
+      pendingFinanceCount,
       openTicketsCount: openTickets.length,
+      staleProjectsCount: staleProjects.length,
       mrr: totalMrr,
       averageTicket,
       income,
@@ -165,6 +174,21 @@ export default function HubCentralCommandView() {
           )}
         </button>
       </div>
+
+      <section className="max-w-[1720px] mx-auto w-full mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3" aria-label="Prioridades da operação">
+        <button onClick={() => navigate('/billing')} className="rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-left transition hover:border-rose-400/40">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-300">Financeiro a conferir</span>
+          <span className="mt-1 block text-sm text-white">{metrics.pendingFinanceCount} cobrança(s) pendente(s) ou vencida(s)</span>
+        </button>
+        <button onClick={() => navigate('/support')} className="rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-left transition hover:border-amber-400/40">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-300">Atendimento</span>
+          <span className="mt-1 block text-sm text-white">{metrics.openTicketsCount} chamado(s) aguardando resolução</span>
+        </button>
+        <button onClick={() => navigate('/projects')} className="rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-left transition hover:border-sky-400/40">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-sky-300">Implantações sem avanço</span>
+          <span className="mt-1 block text-sm text-white">{metrics.staleProjectsCount} cliente(s) em desenvolvimento há mais de 20 dias</span>
+        </button>
+      </section>
 
       {/* CORPO PRINCIPAL COM GLOBO 3D REALISTA THREE.JS E PAINÉIS LATERAIS */}
       <div className="flex-1 grid grid-cols-12 gap-5 max-w-[1720px] mx-auto w-full items-center">

@@ -868,3 +868,9 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Resultados**: despesas pendentes não reduzem o resultado realizado mostrado nos monitores do Office; apenas transações `PAID` contam no caixa realizado, alinhado ao Financeiro.
 - **TV financeira**: o intervalo de datas do dia atual é recalculado a cada minuto para que o painel aberto passe a exibir o novo dia sem recarregar a página.
 - **Investimentos**: a variação diária em reais deriva o valor de referência anterior da cotação atual e da variação percentual fornecida pela API; a variação segue indefinida quando o percentual não tem base válida.
+
+## 55. Prioridades da rotina na Visão Executiva
+
+- **Data**: 28/11/2026.
+- **Fila diária**: a Visão Executiva expõe atalhos para cobranças pendentes/vencidas, tickets abertos/em análise e clientes em “Em Desenvolvimento” há mais de 20 dias. O prazo segue o critério da tela de Projetos. Os cards usam as coleções existentes e levam diretamente às áreas de resolução.
+- **Modo solo**: a paleta de comandos oculta Onboarding, Contratos e Perfil de colaborador enquanto o modo solo estiver ativo, alinhada aos guardas de rota existentes. Os atalhos reaparecem ao selecionar o modo equipe.
